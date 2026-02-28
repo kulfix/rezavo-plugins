@@ -1,57 +1,85 @@
 ---
 name: audit
 description: >
-  Uruchom po zakończeniu implementacji feature'a (koniec subagent-driven/executing-plans).
-  Odpala 5 audytorów równolegle i zbiera wyniki.
+  Use after completing feature implementation, finishing executing-plans or subagent-driven-development,
+  before merge or PR creation
 ---
 
 # Audit Gate
 
-Uruchom 5 audytorów RÓWNOLEGLE (5 Agent tool calls w jednym message).
+5 auditors in parallel to verify implementation quality before merge.
 
-## Agenci
+## Overview
 
-| # | Agent | subagent_type | Co robi |
-|---|-------|---------------|---------|
-| 1 | Fletcher | Fletcher - code reviewer | Code review na git diff vs main |
-| 2 | Javert | Javert - completeness auditor | Spec z feature file vs kod |
-| 3 | Paranoik | Paranoik - tenant debugger | Tenant isolation audit |
-| 4 | Dr. House | Dr. House - test auditor | Jakość nowych/zmienionych testów |
-| 5 | DBA | DBA - migration reviewer | Review nowych migracji |
+Dispatch 5 Agent tool calls in ONE message. Each reviews a different aspect.
+Scope = feature file `files:` field (preferred) or full branch diff (fallback).
 
-## Jak uruchomić
-
-1. Ustal scope: `git diff main...HEAD --name-only`
-2. Znajdź aktualny feature file z `.ai/features/` (hook pokazał listę)
-3. Znajdź plan z frontmatter `plans:` feature file
-4. Uruchom 5 agentów RÓWNOLEGLE — jeden message, 5 Agent tool calls
-5. Każdy agent dostaje prompt z scope i kontekstem (patrz niżej)
-6. Poczekaj na wyniki wszystkich 5
-7. Pokaż podsumowanie (patrz niżej)
-8. Critical/Important = MUST FIX przed kontynuacją
-9. Suggestion = zgłoś userowi, opcjonalne
-
-## Prompt per agent
-
-Każdy agent dostaje:
+## Scope Resolution
 
 ```
-Zbadaj zmiany na branchu relative to main.
-Pliki zmienione: [git diff main...HEAD --name-only]
-Feature: [nazwa z feature file]
-Spec/design: [plans: z frontmatter feature file]
-Skup się na NOWYCH zmianach, nie na legacy code.
+/audit           → feature file files: (default)
+/audit branch    → git diff against main/master (full branch)
+/audit <name>    → specific .ai/features/<name>.md
 ```
 
-## Podsumowanie wyników
+### Resolve steps
 
-Po zebraniu wyników od wszystkich 5 agentów, pokaż:
+1. Find feature file: `.ai/features/` matching current branch
+2. Read `files:` from frontmatter — **this is the scope**
+3. If `files:` empty/missing → fallback:
+   ```bash
+   git diff $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)...HEAD --name-only
+   ```
+4. Read `plans:` from frontmatter — spec for Javert
+
+## Agents
+
+| Agent | subagent_type | Reviews |
+|-------|---------------|---------|
+| Fletcher | Fletcher - code reviewer | Code quality on scoped files |
+| Javert | Javert - completeness auditor | Spec (`plans:`) vs implementation |
+| Paranoik | Paranoik - tenant debugger | Tenant isolation on scoped files |
+| Dr. House | Dr. House - test auditor | Test quality for new/changed tests |
+| DBA | DBA - migration reviewer | New Alembic migrations only |
+
+## Agent Prompt
+
+Each agent gets:
 
 ```
-AUDIT RESULTS:
-- Fletcher: [TEMPO/DRAGGING/RUSHING] — X issues (Y Critical)
-- Javert: [DELIVERED/INCOMPLETE] — X/Y requirements
-- Paranoik: [ISOLATED/SUSPICIOUS/COMPROMISED] — X findings
-- Dr. House: [HEALTHY/SYMPTOMATIC/TERMINAL] — X findings
-- DBA: [SAFE/RISKY/DANGEROUS] — X findings
+Review scope: [files from scope resolution]
+Feature: [name from feature file]
+Spec/plans: [plans: from frontmatter]
+Focus ONLY on scoped files, not legacy code.
 ```
+
+## Execution
+
+1. Resolve scope
+2. Dispatch 5 Agent tool calls — ONE message, parallel
+3. Wait for all results
+4. Show summary
+5. **Critical = MUST FIX.** Suggestion = report to user
+
+## Results Format
+
+```
+AUDIT RESULTS
+─────────────
+Fletcher:  [TEMPO/DRAGGING/RUSHING]          — X issues (Y critical)
+Javert:    [DELIVERED/INCOMPLETE]             — X/Y requirements met
+Paranoik:  [ISOLATED/SUSPICIOUS/COMPROMISED]  — X findings
+Dr. House: [HEALTHY/SYMPTOMATIC/TERMINAL]     — X findings
+DBA:       [SAFE/RISKY/DANGEROUS]             — X findings
+```
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| No feature file exists | Create with **rr:feature-context** first |
+| Empty `files:` | Update during executing-plans, or use `/audit branch` |
+| Not fixing Critical issues | Critical = blocker before merge |
+| Running on wrong branch | Verify branch matches feature file `branch:` field |
+
+**REQUIRES:** rr:feature-context (for scope resolution)

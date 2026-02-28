@@ -1,67 +1,73 @@
 ---
 name: feature-context
 description: >
-  Use alongside brainstorming (Step 1), writing-plans (before saving),
-  executing-plans (after each task), and finishing-a-development-branch
-  (final status update). Reads and updates .ai/features/*.md files.
+  Use when starting brainstorming, writing plans, executing plan tasks, finishing branches,
+  or any workflow step that needs current feature state and file scope
 ---
 
 # Feature Context
 
-Zarządzanie plikami feature w `.ai/features/*.md`.
+Track feature status, plans, and changed files in `.ai/features/*.md`.
 
-## Format pliku
+## Overview
 
-Każdy feature file ma YAML frontmatter:
+Living document per feature. Other skills read it to understand scope — especially **rr:audit** which uses `files:` to know what to review.
+
+## Feature File Format
 
 ```yaml
 ---
-status: done | in_progress | planned | blocked
-branch: feature/multi-tenant-foundation
-blocked_by: other-feature-name
+status: planned | in_progress | done | blocked
+branch: feature/my-feature
+blocked_by: other-feature  # optional
 plans:
-  - docs/plans/2026-02-27-design.md
+  - docs/plans/2026-02-28-design.md
+files:
+  - app/models/foo.py
+  - app/api/foo/routes.py
+  - tests/api/test_foo.py
 ---
 ```
 
-Sekcje markdown:
+Sections:
 
 ```markdown
 # Feature Name
-
 ## Co zrobione
 ## TODO
 ## Known issues
 ## Założenia / pomysły
 ```
 
-## Co robić — zależy od momentu workflow
+## When to Update
 
-### Brainstorming (po design approval)
+| Workflow step | Action |
+|---------------|--------|
+| **Brainstorming** | Create file, `status: planned`, fill "Założenia" |
+| **Writing plans** | Add plan path to `plans:` |
+| **Executing plans** (after each task) | Update `files:`, "Co zrobione", "TODO", set `status: in_progress` |
+| **Bug found** | Add to "Known issues" |
+| **Finishing branch** | Set `status: done`, final "Co zrobione", clean "TODO" |
 
-1. Przeczytaj relevantne feature files (hook pokazał listę)
-2. Utwórz nowy plik `.ai/features/<nazwa>.md` z:
-   - `status: planned`
-   - `branch:` aktualny branch
-   - Sekcja "Założenia / pomysły" z decyzjami z brainstormingu
+## Updating `files:`
 
-### Writing-plans (przed zapisaniem planu)
+After each completed task, add files your feature created or significantly modified:
 
-1. Dodaj link do planu w frontmatter `plans:` odpowiedniego feature file
+```bash
+git diff HEAD~1 --name-only
+```
 
-### Executing-plans (po postępie)
+- Only files central to the feature (not incidental reformats)
+- Keep sorted alphabetically
+- Remove deleted files from list
 
-1. Zaktualizuj "Co zrobione" — dodaj ukończone komponenty
-2. Zaktualizuj "TODO" — usuń ukończone
-3. Ustaw `status: in_progress` jeśli był `planned`
+## Common Mistakes
 
-### Bug znaleziony
+| Mistake | Fix |
+|---------|-----|
+| Not updating `files:` after tasks | rr:audit falls back to full branch diff — noisy |
+| Adding every touched file | Only files central to feature |
+| No feature file before executing plans | Create during brainstorming or manually |
+| Missing `plans:` link | rr:audit (Javert) can't verify completeness |
 
-1. Dodaj do "Known issues" z opisem i lokalizacją
-
-### Finishing branch (przed merge/PR)
-
-1. Ustaw `status: done`
-2. Zaktualizuj "Co zrobione" — finalna lista
-3. Wyczyść "TODO" (powinno być puste)
-4. Dodaj "Known issues" jeśli zostały
+**REQUIRED BY:** rr:audit, rr:brainstorming, rr:writing-plans, rr:executing-plans, rr:finishing-a-development-branch
