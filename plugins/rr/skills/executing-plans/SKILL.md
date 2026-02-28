@@ -1,15 +1,15 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: Use when you have a written implementation plan to execute — runs all tasks autonomously, stops only on blockers
 ---
 
 # Executing Plans
 
 ## Overview
 
-Load plan, review critically, execute tasks in batches, report for review between batches.
+Load plan, review critically, execute ALL tasks autonomously. Stop only on blockers.
 
-**Core principle:** Batch execution with checkpoints for architect review.
+**Core principle:** The plan is already approved. Execute it fully without waiting for permission between tasks.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
@@ -28,34 +28,27 @@ Before anything else:
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute Batch
-**Default: First 3 tasks**
+### Step 2: Execute ALL Tasks
+
+Execute every task from the plan sequentially. Do NOT stop between tasks to ask for feedback.
 
 For each task:
 1. Mark as in_progress
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
 4. Mark as completed
+5. Update feature file `files:` with changed files
+6. Move to next task immediately
 
-### Step 3: Report
-When batch complete:
-- Show what was implemented
-- Show verification output
-- Say: "Ready for feedback."
+**Only stop if blocked** — see "When to Stop" below.
 
-### Step 4: Continue
-Based on feedback:
-- Apply changes if needed
-- Execute next batch
-- Repeat until complete
-
-### Step 5: Simplify (REQUIRED)
+### Step 3: Simplify (REQUIRED)
 
 After all tasks complete, before audit:
 - Run `/simplify` to auto-fix code reuse, quality, and efficiency issues
 - This cleans up implementation before audit reviewers see it
 
-### Step 6: Update Feature File & Audit (REQUIRED)
+### Step 4: Update Feature File & Audit (REQUIRED)
 
 After ALL tasks complete and verified:
 1. Update feature file status (use `feature-context` skill)
@@ -68,38 +61,34 @@ After ALL tasks complete and verified:
 ## When to Stop and Ask for Help
 
 **STOP executing immediately when:**
-- Hit a blocker mid-batch (missing dependency, test fails, instruction unclear)
-- Plan has critical gaps preventing starting
+- Hit a blocker (missing dependency, test fails, instruction unclear)
+- Plan has critical gaps
 - You don't understand an instruction
 - Verification fails repeatedly
 
-**Ask for clarification rather than guessing.**
+**Ask for clarification rather than guessing. Then resume from where you stopped.**
 
-## When to Revisit Earlier Steps
-
-**Return to Review (Step 1) when:**
-- Partner updates the plan based on your feedback
-- Fundamental approach needs rethinking
-
-**Don't force through blockers** - stop and ask.
+Do NOT stop for:
+- Routine progress updates (just keep going)
+- Asking "should I continue?" (yes, always continue)
+- Reporting what you just did (report at the end)
 
 ## Remember
 - Load feature context FIRST (Step 0)
-- Review plan critically
+- Review plan critically at start
+- Then execute ALL tasks without stopping
 - Follow plan steps exactly
 - Don't skip verifications
-- Reference skills when plan says to
-- Between batches: just report and wait
-- Stop when blocked, don't guess
+- Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: simplify → update feature file + run /audit
+- After last task: simplify → update feature file → /audit
 
 ## Integration
 
 **Required workflow skills:**
-- **feature-context** - REQUIRED: Load at start, update at end
+- **feature-context** - REQUIRED: Load at start, update per task, update at end
 - **simplify** - REQUIRED: Run after last task, before audit
-- **audit** - REQUIRED: Run after audit, before merge/PR
+- **audit** - REQUIRED: Run after simplify, before merge/PR
 - **rr:using-git-worktrees** - Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:finishing-a-development-branch** - Complete development after audit passes
