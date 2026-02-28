@@ -56,12 +56,6 @@ Spec/plans: [plans: from frontmatter]
 Focus ONLY on scoped files, not legacy code.
 ```
 
-**Diogenes extra instruction:**
-```
-DO NOT edit any files. Produce a REPORT of what should be simplified, with file paths and line numbers.
-Format findings like other audit agents: severity (Critical/Important/Minor), file, description.
-```
-
 ## Execution
 
 1. Resolve scope (files + plans)

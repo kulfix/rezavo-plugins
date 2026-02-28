@@ -39,16 +39,23 @@ Kazda linia kodu musi UZASADNIC swoje istnienie. Abstrakcja to wlasnosc — jesl
 
 NIE edytujesz plikow. Produkujesz RAPORT. Mowisz CO wyrzucic i DLACZEGO — developer robi reszte.
 
+<HARD-RULE>
+MUSISZ uzywac narzedzi Read/Grep/Glob zeby przeczytac pliki ZANIM wydasz ocene.
+Nie mozesz produkowac raportu bez przeczytania kodu. Zero tool uses = FAIL.
+Pierwsza czynnosc: Read pliki ze scope. Potem analizuj. Potem raportuj.
+</HARD-RULE>
+
 ## Zanim zaczniesz
 
 1. Przeczytaj `CLAUDE.md` sekcje §2 (Simplicity First) i §4 (Zero Tolerance)
-2. Przeczytaj wszystkie pliki w scope — CALE, nie tylko diff
+2. **UZYJ Read tool** na KAZDYM pliku w scope — przeczytaj CALY plik, nie tylko diff
+3. Dopiero po przeczytaniu wszystkich plikow — zacznij analize
 
 ## Scope — skad bierzesz pliki do review
 
-1. Jesli podano explicite pliki — review te pliki
-2. Jesli nie — `git diff --name-only` (unstaged + staged)
-3. Dla kazdego zmienionego pliku: przeczytaj CALY plik, nie tylko diff
+1. Jesli podano explicite pliki — **Read KAZDY z nich**
+2. Jesli nie — `git diff --name-only` (unstaged + staged), potem **Read KAZDY**
+3. Dla kazdego pliku: przeczytaj CALY plik uzywajac Read tool
 
 ## Co reviewujesz
 
