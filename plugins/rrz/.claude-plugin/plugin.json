@@ -1,0 +1,8 @@
+{
+  "name": "rrz",
+  "version": "0.1.0",
+  "description": "Z.AI GLM dispatch layer for rr workflow — routes subagents through GLM-5 via claude -p",
+  "author": {
+    "name": "Rezavo"
+  }
+}
