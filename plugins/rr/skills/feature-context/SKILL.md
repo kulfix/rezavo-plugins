@@ -19,6 +19,7 @@ Living document per feature. Other skills read it to understand scope — especi
 ---
 status: planned | in_progress | done | blocked
 branch: feature/my-feature
+base_branch: main  # branch this feature was created from (for PR targeting)
 blocked_by: other-feature  # optional
 plans:
   - docs/plans/2026-02-28-design.md
@@ -28,6 +29,10 @@ files:
   - tests/api/test_foo.py
 ---
 ```
+
+**Branch chaining:** Features can branch from other features, not just `main`.
+Example: `main → feature/A → feature/B`. Feature B's `base_branch: feature/A`.
+`finishing-a-development-branch` reads `base_branch` to target PRs correctly.
 
 Sections:
 
@@ -43,7 +48,7 @@ Sections:
 
 | Workflow step | Action |
 |---------------|--------|
-| **Brainstorming** | Create file, `status: planned`, fill "Założenia" |
+| **Brainstorming** | Create branch, create file with `status: planned`, `branch:`, `base_branch:`, fill "Założenia" |
 | **Writing plans** | Add plan path to `plans:` |
 | **Executing plans** (after each task) | Update `files:`, "Co zrobione", "TODO", set `status: in_progress` |
 | **Bug found** | Add to "Known issues" |

@@ -9,7 +9,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify audit → Update feature file → Verify tests → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -37,37 +37,34 @@ Use `feature-context` skill to update the feature file:
 npm test / cargo test / pytest / go test ./...
 ```
 
-**If tests fail:**
-```
-Tests failing (<N> failures). Must fix before completing:
+**If tests fail:** Stop. Fix before proceeding.
 
-[Show failures]
+### Step 3: Determine Base Branch
 
-Cannot proceed with merge/PR until tests pass.
-```
+Read `base_branch` from feature file frontmatter (`.ai/features/<name>.md`).
 
-Stop. Don't proceed to Step 2.
-
-**If tests pass:** Continue to Step 2.
-
-### Step 2: Determine Base Branch
-
+If not set, determine from git:
 ```bash
-# Try common base branches
-git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+# Find the branch this feature branched from
+git log --oneline --decorate --first-parent | grep -m1 'origin/' | head -1
 ```
 
-Or ask: "This branch split from main - is that correct?"
+Or ask: "This branch appears to have split from `<branch>` - is that correct?"
 
-### Step 3: Present Options
+**Important:** The base branch is NOT always `main`. Feature branches can chain:
+`main → feature/A → feature/B`. In this case, feature/B's base is feature/A, not main.
+
+### Step 4: Present Options
 
 Present exactly these 4 options:
 
 ```
 Implementation complete. What would you like to do?
 
+Base branch: <base-branch>
+
 1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
+2. Push and create a Pull Request (target: <base-branch>)
 3. Keep the branch as-is (I'll handle it later)
 4. Discard this work
 
@@ -76,28 +73,21 @@ Which option?
 
 **Don't add explanation** - keep options concise.
 
-### Step 4: Execute Choice
+### Step 5: Execute Choice
 
 #### Option 1: Merge Locally
 
 ```bash
-# Switch to base branch
 git checkout <base-branch>
-
-# Pull latest
 git pull
-
-# Merge feature branch
 git merge <feature-branch>
-
 # Verify tests on merged result
 <test command>
-
 # If tests pass
 git branch -d <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup worktree (Step 6)
 
 #### Option 2: Push and Create PR
 
@@ -105,8 +95,8 @@ Then: Cleanup worktree (Step 5)
 # Push branch
 git push -u origin <feature-branch>
 
-# Create PR
-gh pr create --title "<title>" --body "$(cat <<'EOF'
+# Create PR targeting base branch (NOT always main!)
+gh pr create --base <base-branch> --title "<title>" --body "$(cat <<'EOF'
 ## Summary
 <2-3 bullets of what changed>
 
@@ -116,7 +106,9 @@ EOF
 )"
 ```
 
-Then: Cleanup worktree (Step 5)
+**Critical:** `--base <base-branch>` must be the actual base, not hardcoded `main`.
+
+Then: Cleanup worktree (Step 6)
 
 #### Option 3: Keep As-Is
 
@@ -144,9 +136,9 @@ git checkout <base-branch>
 git branch -D <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup worktree (Step 6)
 
-### Step 5: Cleanup Worktree
+### Step 6: Cleanup Worktree
 
 **For Options 1, 2, 4:**
 
@@ -164,41 +156,25 @@ git worktree remove <worktree-path>
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
-
-## Common Mistakes
-
-**Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
-
-**Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
-
-**Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
-
-**No confirmation for discard**
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+| Option | Merge | Push | PR Target | Keep Worktree | Cleanup Branch |
+|--------|-------|------|-----------|---------------|----------------|
+| 1. Merge locally | ✓ | - | - | - | ✓ |
+| 2. Create PR | - | ✓ | base-branch | ✓ | - |
+| 3. Keep as-is | - | - | - | ✓ | - |
+| 4. Discard | - | - | - | - | ✓ (force) |
 
 ## Red Flags
 
 **Never:**
+- Hardcode `main` as PR target — always use the actual base branch
 - Proceed with failing tests
 - Merge without verifying tests on result
 - Delete work without confirmation
 - Force-push without explicit request
 
 **Always:**
-- Verify tests before offering options
+- Verify audit was run before finishing
+- Read base branch from feature file or git history
 - Present exactly 4 options
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only
@@ -206,8 +182,9 @@ git worktree remove <worktree-path>
 ## Integration
 
 **Called by:**
-- **subagent-driven-development** (Step 7) - After all tasks complete
-- **executing-plans** (Step 5) - After all batches complete
+- **subagent-driven-development** — After all tasks + audit complete
+- **executing-plans** — After all tasks + audit complete
 
 **Pairs with:**
 - **using-git-worktrees** - Cleans up worktree created by that skill
+- **feature-context** - Reads base_branch, updates status to done

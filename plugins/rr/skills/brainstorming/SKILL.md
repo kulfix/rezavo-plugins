@@ -28,7 +28,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc + feature file** — save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create/update `.ai/features/<name>.md` with `status: planned` and plan path, commit both
+6. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
 7. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
@@ -41,6 +41,7 @@ digraph brainstorming {
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
+    "Create feature branch from current" [shape=box style=filled fillcolor=lightyellow];
     "Write design doc + feature file" [shape=box];
     "Invoke writing-plans skill" [shape=doublecircle];
 
@@ -50,7 +51,8 @@ digraph brainstorming {
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc + feature file" [label="yes"];
+    "User approves design?" -> "Create feature branch from current" [label="yes"];
+    "Create feature branch from current" -> "Write design doc + feature file";
     "Write design doc + feature file" -> "Invoke writing-plans skill";
 }
 ```
@@ -62,7 +64,23 @@ digraph brainstorming {
 Before starting brainstorming:
 1. Use `feature-context` skill to check existing feature files for this branch
 2. If feature file exists — read it, understand status and dependencies
-3. If no feature file — you'll create one after the design is approved
+3. If no feature file — you'll create one in step 6
+
+## Branch Creation (Step 6)
+
+After design is approved, before writing docs:
+
+```bash
+# Create feature branch from current branch
+git checkout -b feature/<feature-name>
+```
+
+- Branch name: `feature/<short-descriptive-name>` (e.g. `feature/user-management-v2`)
+- Base: always current branch (could be `main`, could be another feature branch)
+- Record base branch in feature file frontmatter: `base_branch: <current-branch>`
+- This enables branch chaining: `main → feature/A → feature/B`
+
+Then write design doc + feature file on the new branch and commit.
 
 ## The Process
 
@@ -85,12 +103,6 @@ Before starting brainstorming:
 - Cover: architecture, components, data flow, error handling, testing
 - Be ready to go back and clarify if something doesn't make sense
 
-## After the Design
-
-This is covered by checklist step 6 — write design doc AND feature file in the same step, commit both together. Then step 7 invokes writing-plans.
-
-Do NOT invoke any implementation skill. writing-plans is the ONLY next step.
-
 ## Key Principles
 
 - **One question at a time** - Don't overwhelm with multiple questions
@@ -99,3 +111,4 @@ Do NOT invoke any implementation skill. writing-plans is the ONLY next step.
 - **Explore alternatives** - Always propose 2-3 approaches before settling
 - **Incremental validation** - Present design, get approval before moving on
 - **Be flexible** - Go back and clarify when something doesn't make sense
+- **One feature = one branch** - Always create a feature branch, never work directly on base
