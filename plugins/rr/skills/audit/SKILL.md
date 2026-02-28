@@ -20,7 +20,7 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 
 ```
 /audit           → feature file files: (default)
-/audit branch    → git diff against main/master (full branch)
+/audit branch    → git diff against base branch (full branch)
 /audit <name>    → specific .ai/features/<name>.md
 ```
 
@@ -28,9 +28,13 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 
 1. Find feature file: `.ai/features/` matching current branch
 2. Read `files:` from frontmatter — **this is the scope**
-3. If `files:` empty/missing → fallback:
+3. If `files:` empty/missing → fallback: detect base branch, then diff
    ```bash
-   git diff $(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master)...HEAD --name-only
+   # Detect base branch (do NOT hardcode main/master)
+   BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@') \
+     || BASE=$(git branch -r | grep -oP 'origin/\K(main|master)' | head -1) \
+     || BASE="main"
+   git diff $(git merge-base HEAD "$BASE")...HEAD --name-only
    ```
 4. Read `plans:` from frontmatter — spec for Javert
 
