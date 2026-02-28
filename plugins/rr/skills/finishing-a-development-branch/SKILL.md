@@ -9,18 +9,18 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify audit → Update feature file → Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify pre-merge-review → Update feature file → Verify tests → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
 ## The Process
 
-### Step 0: Verify Audit Was Run (REQUIRED)
+### Step 0: Verify Gate Was Run (REQUIRED)
 
 Before finishing:
-1. Check if `/audit` was run in this session or on this branch
-2. If NOT run — **STOP. Run `/audit` first.** Do not proceed without it.
-3. If Critical/Important findings exist — fix them before continuing
+1. Check if `/pre-merge-review` was run in this session or on this branch (look for `.ai/audit/round-*.md` reports)
+2. If NOT run — **STOP. Run `/pre-merge-review` first.** Do not proceed without it.
+3. Gate must have been approved by user before proceeding
 
 ### Step 1: Update Feature File
 
@@ -173,7 +173,7 @@ git worktree remove <worktree-path>
 - Force-push without explicit request
 
 **Always:**
-- Verify audit was run before finishing
+- Verify pre-merge-review was run before finishing
 - Read base branch from feature file or git history
 - Present exactly 4 options
 - Get typed confirmation for Option 4
@@ -182,8 +182,8 @@ git worktree remove <worktree-path>
 ## Integration
 
 **Called by:**
-- **subagent-driven-development** — After all tasks + audit complete
-- **executing-plans** — After all tasks + audit complete
+- **subagent-driven-development** — After all tasks + pre-merge-review complete
+- **executing-plans** — After all tasks + pre-merge-review complete
 
 **Pairs with:**
 - **using-git-worktrees** - Cleans up worktree created by that skill

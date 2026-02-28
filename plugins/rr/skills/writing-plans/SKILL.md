@@ -51,18 +51,19 @@ Before writing any plan:
 ---
 ```
 
-## Last Task: Audit Gate
+## Last Task: Gate
 
 **Every plan MUST end with this task:**
 
 ```markdown
-### Task N: Audit Gate
+### Task N: Gate
 
-Run `/audit` skill. This dispatches 5 auditors in parallel:
-Fletcher (code review), Javert (completeness), Paranoik (tenant isolation),
-Dr. House (test quality), DBA (migration safety).
+Run `/pre-merge-review` skill. This runs 3 audit rounds with fixes between them:
+Round 1-3: 6 auditors (Fletcher, Javert, Paranoik, Dr. House, DBA, Diogenes)
+→ fix findings → commit → re-audit.
 
-Fix all Critical/Important findings before merge/PR.
+Reports saved to `.ai/audit/round-{1,2,3}.md`.
+Final summary + user approval before PR.
 ```
 
 ## Task Structure

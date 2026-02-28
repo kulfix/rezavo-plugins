@@ -42,21 +42,15 @@ For each task:
 
 **Only stop if blocked** — see "When to Stop" below.
 
-### Step 3: Simplify (REQUIRED)
-
-After all tasks complete, before audit:
-- Run `/simplify` to auto-fix code reuse, quality, and efficiency issues
-- This cleans up implementation before audit reviewers see it
-
-### Step 4: Update Feature File & Audit (REQUIRED)
+### Step 3: Update Feature File & Gate (REQUIRED)
 
 After ALL tasks complete and verified:
 1. Update feature file status (use `feature-context` skill)
-2. **RUN `/audit`** — this runs 5 auditors in parallel (Fletcher, Javert, Paranoik, Dr. House, DBA)
-3. Fix any Critical/Important findings from audit
-4. Then use `rr:finishing-a-development-branch` to complete
+2. **RUN `/pre-merge-review`** — this runs 3 audit rounds (6 auditors each), fixes between rounds, saves reports
+3. Gate presents final summary and asks for user approval
+4. After approval → `rr:finishing-a-development-branch`
 
-**DO NOT proceed to finishing-a-development-branch without completing /audit.**
+**DO NOT proceed to finishing-a-development-branch without completing /pre-merge-review.**
 
 ## When to Stop and Ask for Help
 
@@ -81,14 +75,13 @@ Do NOT stop for:
 - Don't skip verifications
 - Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: simplify → update feature file → /audit
+- After last task: update feature file → /pre-merge-review
 
 ## Integration
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start, update per task, update at end
-- **simplify** - REQUIRED: Run after last task, before audit
-- **audit** - REQUIRED: Run after simplify, before finishing branch
+- **pre-merge-review** - REQUIRED: Run after last task, 3 audit rounds (incl. Diogenes) + fixes + approval
 - **rr:using-git-worktrees** - Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
-- **rr:finishing-a-development-branch** - Complete development after audit passes
+- **rr:finishing-a-development-branch** - Complete development after pre-merge-review passes

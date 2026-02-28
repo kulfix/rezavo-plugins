@@ -7,7 +7,7 @@ description: Use when executing implementation plans with independent tasks in t
 
 Execute plan by dispatching fresh subagent per task. Reviews happen at the end (audit + PR), not after each task.
 
-**Core principle:** Fresh subagent per task + self-review = fast iteration. Quality gates at the end via audit + PR.
+**Core principle:** Fresh subagent per task + self-review = fast iteration. Quality pre-merge-reviews at the end via audit + PR.
 
 ## When to Use
 
@@ -63,9 +63,7 @@ digraph process {
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
-    "Run simplify" [shape=box];
-    "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)" [shape=box style=filled fillcolor=lightyellow];
-    "Fix audit findings" [shape=box];
+    "Run /pre-merge-review (3 audit rounds + fixes + approval)" [shape=box style=filled fillcolor=lightyellow];
     "Use rr:finishing-a-development-branch → PR" [shape=box style=filled fillcolor=lightgreen];
 
     "Load feature context (Step 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
@@ -77,10 +75,8 @@ digraph process {
     "Implementer implements, tests, commits, self-reviews" -> "Mark task complete, update feature file files:";
     "Mark task complete, update feature file files:" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Run simplify" [label="no"];
-    "Run simplify" -> "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)";
-    "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)" -> "Fix audit findings";
-    "Fix audit findings" -> "Use rr:finishing-a-development-branch → PR";
+    "More tasks remain?" -> "Run /pre-merge-review (3 audit rounds + fixes + approval)" [label="no"];
+    "Run /pre-merge-review (3 audit rounds + fixes + approval)" -> "Use rr:finishing-a-development-branch → PR";
 }
 ```
 
@@ -122,9 +118,7 @@ Implementer:
 ... (continue for all tasks)
 
 [After all tasks]
-[Run /simplify]
-[Run /audit — Fletcher, Javert, Paranoik, Dr. House, DBA]
-[Fix Critical/Important findings]
+[Run /pre-merge-review — 3 audit rounds with fixes + approval]
 [Use rr:finishing-a-development-branch → PR]
 
 Done!
@@ -150,10 +144,9 @@ Done!
 - Questions surfaced before work begins (not after)
 - No reviewer subagents per task — saves ~2 agent invocations per task
 
-**Quality gates (at the end):**
+**Quality pre-merge-reviews (at the end):**
 - Self-review per task catches obvious issues during implementation
-- `/simplify` cleans up code quality across all tasks
-- `/audit` dispatches 5 specialized auditors (Fletcher, Javert, Paranoik, Dr. House, DBA)
+- `/pre-merge-review` runs 3 audit rounds (6 auditors incl. Diogenes for simplification), fixes between rounds, requires user approval
 - PR creation provides final integration checkpoint
 
 ## Red Flags
@@ -164,9 +157,8 @@ Done!
 - Make subagent read plan file (provide full text instead)
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)
-- Skip `/audit` at the end — it's the primary quality gate
-- Skip `/simplify` before audit
-- Create PR without passing audit
+- Skip `/pre-merge-review` at the end — it's the primary quality pre-merge-review
+- Create PR without passing pre-merge-review
 
 **If subagent asks questions:**
 - Answer clearly and completely
@@ -177,27 +169,20 @@ Done!
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
 
-**If audit finds Critical/Important issues:**
-- Fix them before creating PR
-- Re-run audit if changes are significant
+**If pre-merge-review finds persistent issues after 3 rounds:**
+- Address them before creating PR
+- Re-run `/pre-merge-review` if needed
 
 ## Per-Task Feature File Update
 
-After each task is marked complete, update the feature file `files:` field with files created or significantly modified by that task. This ensures `rr:audit` can scope its review properly instead of falling back to a noisy full branch diff.
-
-## Simplify Pass (REQUIRED)
-
-After all tasks complete, before final code review:
-- Run `/simplify` to auto-fix code reuse, quality, and efficiency issues
-- This cleans up implementation before reviewers see it
+After each task is marked complete, update the feature file `files:` field with files created or significantly modified by that task. This ensures `/audit` (called by `/pre-merge-review`) can scope its review properly instead of falling back to a noisy full branch diff.
 
 ## Integration
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
-- **simplify** - REQUIRED: Run after last task, before audit
-- **audit** - REQUIRED: Run after simplify, before finishing branch
-- **rr:finishing-a-development-branch** - Complete development after audit → PR
+- **pre-merge-review** - REQUIRED: Run after last task, 3 audit rounds (incl. Diogenes for simplification) + fixes + approval
+- **rr:finishing-a-development-branch** - Complete development after pre-merge-review → PR
 
 **Subagents should use:**
 - **rr:test-driven-development** - Subagents follow TDD for each task
