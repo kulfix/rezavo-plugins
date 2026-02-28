@@ -34,6 +34,11 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
    ```
 4. Read `plans:` from frontmatter — spec for Javert
 
+<HARD-RULE>
+If `files:` has entries → THAT IS THE SCOPE. Do NOT run git diff. Do NOT expand scope.
+Git diff fallback is ONLY for when `files:` is empty or missing.
+</HARD-RULE>
+
 ## Agents
 
 | Agent | subagent_type | Reviews |
