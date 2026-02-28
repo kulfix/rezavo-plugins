@@ -1,0 +1,17 @@
+{
+  "name": "rezavo-plugins",
+  "description": "Rezavo workflow plugins",
+  "owner": {
+    "name": "Rezavo"
+  },
+  "plugins": [
+    {
+      "name": "rr",
+      "description": "Rezavo workflow overrides — extends superpowers with feature-context and audit",
+      "version": "1.0.0",
+      "author": { "name": "Rezavo" },
+      "source": "./plugins/rr",
+      "category": "productivity"
+    }
+  ]
+}
