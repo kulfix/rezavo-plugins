@@ -1,6 +1,6 @@
 {
   "name": "rr",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Rezavo workflow plugin with feature-context, pre-merge-review, audit, and development skills",
   "author": {
     "name": "Rezavo"

@@ -28,17 +28,32 @@ Before anything else:
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute ALL Tasks
+### Step 2: Execute ALL Tasks via Sonnet Subagents
 
-Execute every task from the plan sequentially. Do NOT stop between tasks to ask for feedback.
+Dispatch each task as a **Sonnet subagent** (`model: "sonnet"`, `subagent_type: "general-purpose"`).
+The plan is already written — Sonnet implements, Opus orchestrates.
 
 For each task:
 1. Mark as in_progress
-2. Follow each step exactly (plan has bite-sized steps)
-3. Run verifications as specified
+2. Dispatch as Sonnet subagent with full task context:
+   ```
+   Agent tool call:
+     subagent_type: general-purpose
+     model: sonnet
+     prompt: |
+       Task: [task subject]
+       [full task description from plan]
+       Project root: [cwd]
+       Feature file: [path]
+       Verify: [verification steps from plan]
+   ```
+3. When subagent completes: review result, verify it worked
 4. Mark as completed
 5. Update feature file `files:` with changed files
 6. Move to next task immediately
+
+**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple Sonnet subagents in parallel.
+**Sequential tasks:** If task N depends on task N-1, wait for completion before dispatching.
 
 **Only stop if blocked** — see "When to Stop" below.
 

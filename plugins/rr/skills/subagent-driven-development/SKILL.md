@@ -5,9 +5,9 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task. Reviews happen at the end (audit + PR), not after each task.
+Execute plan by dispatching fresh **Sonnet subagent** per task. Reviews happen at the end (audit + PR), not after each task.
 
-**Core principle:** Fresh subagent per task + self-review = fast iteration. Quality pre-merge-reviews at the end via audit + PR.
+**Core principle:** Fresh Sonnet subagent per task + self-review = fast iteration. Opus orchestrates, Sonnet implements.
 
 ## When to Use
 
