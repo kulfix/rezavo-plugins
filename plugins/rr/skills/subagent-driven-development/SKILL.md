@@ -5,9 +5,9 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+Execute plan by dispatching fresh subagent per task. Reviews happen at the end (audit + PR), not after each task.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Core principle:** Fresh subagent per task + self-review = fast iteration. Quality gates at the end via audit + PR.
 
 ## When to Use
 
@@ -32,8 +32,8 @@ digraph when_to_use {
 **vs. Executing Plans (parallel session):**
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
-- Two-stage review after each task: spec compliance first, then code quality
 - Faster iteration (no human-in-loop between tasks)
+- Reviews at the end (audit + PR), not per task
 
 ## The Process
 
@@ -53,56 +53,40 @@ digraph process {
     "Load feature context (Step 0)" [shape=box style=filled fillcolor=lightyellow];
 
     subgraph cluster_per_task {
-        label="Per Task";
+        label="Per Task (fast loop)";
         "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
-        "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
-        "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
-        "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
-        "Code quality reviewer subagent approves?" [shape=diamond];
-        "Implementer subagent fixes quality issues" [shape=box];
+        "Implementer implements, tests, commits, self-reviews" [shape=box];
         "Mark task complete, update feature file files:" [shape=box];
     }
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Run simplify" [shape=box];
-    "Dispatch final code reviewer subagent for entire implementation" [shape=box];
-    "Update feature file + run /audit" [shape=box style=filled fillcolor=lightyellow];
-    "Use rr:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)" [shape=box style=filled fillcolor=lightyellow];
+    "Fix audit findings" [shape=box];
+    "Use rr:finishing-a-development-branch → PR" [shape=box style=filled fillcolor=lightgreen];
 
     "Load feature context (Step 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
-    "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
-    "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete, update feature file files:" [label="yes"];
+    "Implementer subagent asks questions?" -> "Implementer implements, tests, commits, self-reviews" [label="no"];
+    "Implementer implements, tests, commits, self-reviews" -> "Mark task complete, update feature file files:";
     "Mark task complete, update feature file files:" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Run simplify" [label="no"];
-    "Run simplify" -> "Dispatch final code reviewer subagent for entire implementation";
-    "Dispatch final code reviewer subagent for entire implementation" -> "Update feature file + run /audit";
-    "Update feature file + run /audit" -> "Use rr:finishing-a-development-branch";
+    "Run simplify" -> "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)";
+    "Run /audit (Fletcher, Javert, Paranoik, Dr. House, DBA)" -> "Fix audit findings";
+    "Fix audit findings" -> "Use rr:finishing-a-development-branch → PR";
 }
 ```
 
 ## Prompt Templates
 
 - `./implementer-prompt.md` - Dispatch implementer subagent
-- `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
-- `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
 
 ## Example Workflow
 
@@ -115,67 +99,33 @@ You: I'm using Subagent-Driven Development to execute this plan.
 
 Task 1: Hook installation script
 
-[Get Task 1 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
-
+[Dispatch implementer subagent with full task text + context]
 Implementer: "Before I begin - should the hook be installed at user or system level?"
-
 You: "User level (~/.config/rr/hooks/)"
-
-Implementer: "Got it. Implementing now..."
-[Later] Implementer:
+Implementer:
   - Implemented install-hook command
   - Added tests, 5/5 passing
   - Self-review: Found I missed --force flag, added it
   - Committed
-
-[Dispatch spec compliance reviewer]
-Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
-
-[Get git SHAs, dispatch code quality reviewer]
-Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
-
-[Mark Task 1 complete]
+[Mark Task 1 complete, update feature file files:]
 
 Task 2: Recovery modes
 
-[Get Task 2 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
-
-Implementer: [No questions, proceeds]
+[Dispatch implementer subagent]
 Implementer:
   - Added verify/repair modes
   - 8/8 tests passing
   - Self-review: All good
   - Committed
+[Mark Task 2 complete, update feature file files:]
 
-[Dispatch spec compliance reviewer]
-Spec reviewer: ❌ Issues:
-  - Missing: Progress reporting (spec says "report every 100 items")
-  - Extra: Added --json flag (not requested)
-
-[Implementer fixes issues]
-Implementer: Removed --json flag, added progress reporting
-
-[Spec reviewer reviews again]
-Spec reviewer: ✅ Spec compliant now
-
-[Dispatch code quality reviewer]
-Code reviewer: Strengths: Solid. Issues (Important): Magic number (100)
-
-[Implementer fixes]
-Implementer: Extracted PROGRESS_INTERVAL constant
-
-[Code reviewer reviews again]
-Code reviewer: ✅ Approved
-
-[Mark Task 2 complete]
-
-...
+... (continue for all tasks)
 
 [After all tasks]
-[Dispatch final code-reviewer]
-Final reviewer: All requirements met, ready to merge
+[Run /simplify]
+[Run /audit — Fletcher, Javert, Paranoik, Dr. House, DBA]
+[Fix Critical/Important findings]
+[Use rr:finishing-a-development-branch → PR]
 
 Done!
 ```
@@ -191,57 +141,45 @@ Done!
 **vs. Executing Plans:**
 - Same session (no handoff)
 - Continuous progress (no waiting)
-- Review checkpoints automatic
+- Fast task loop (no per-task review overhead)
 
 **Efficiency gains:**
 - No file reading overhead (controller provides full text)
 - Controller curates exactly what context is needed
 - Subagent gets complete information upfront
 - Questions surfaced before work begins (not after)
+- No reviewer subagents per task — saves ~2 agent invocations per task
 
-**Quality gates:**
-- Self-review catches issues before handoff
-- Two-stage review: spec compliance, then code quality
-- Review loops ensure fixes actually work
-- Spec compliance prevents over/under-building
-- Code quality ensures implementation is well-built
-
-**Cost:**
-- More subagent invocations (implementer + 2 reviewers per task)
-- Controller does more prep work (extracting all tasks upfront)
-- Review loops add iterations
-- But catches issues early (cheaper than debugging later)
+**Quality gates (at the end):**
+- Self-review per task catches obvious issues during implementation
+- `/simplify` cleans up code quality across all tasks
+- `/audit` dispatches 5 specialized auditors (Fletcher, Javert, Paranoik, Dr. House, DBA)
+- PR creation provides final integration checkpoint
 
 ## Red Flags
 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
-- Skip reviews (spec compliance OR code quality)
-- Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Make subagent read plan file (provide full text instead)
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)
-- Accept "close enough" on spec compliance (spec reviewer found issues = not done)
-- Skip review loops (reviewer found issues = implementer fixes = review again)
-- Let implementer self-review replace actual review (both are needed)
-- **Start code quality review before spec compliance is ✅** (wrong order)
-- Move to next task while either review has open issues
+- Skip `/audit` at the end — it's the primary quality gate
+- Skip `/simplify` before audit
+- Create PR without passing audit
 
 **If subagent asks questions:**
 - Answer clearly and completely
 - Provide additional context if needed
 - Don't rush them into implementation
 
-**If reviewer finds issues:**
-- Implementer (same subagent) fixes them
-- Reviewer reviews again
-- Repeat until approved
-- Don't skip the re-review
-
 **If subagent fails task:**
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
+
+**If audit finds Critical/Important issues:**
+- Fix them before creating PR
+- Re-run audit if changes are significant
 
 ## Per-Task Feature File Update
 
@@ -257,12 +195,9 @@ After all tasks complete, before final code review:
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
-- **simplify** - REQUIRED: Run after last task, before final review
-- **audit** - REQUIRED: Run after final review, before finishing branch
-- **rr:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
-- **rr:writing-plans** - Creates the plan this skill executes
-- **rr:requesting-code-review** - Code review template for reviewer subagents
-- **rr:finishing-a-development-branch** - Complete development after audit passes
+- **simplify** - REQUIRED: Run after last task, before audit
+- **audit** - REQUIRED: Run after simplify, before finishing branch
+- **rr:finishing-a-development-branch** - Complete development after audit → PR
 
 **Subagents should use:**
 - **rr:test-driven-development** - Subagents follow TDD for each task
