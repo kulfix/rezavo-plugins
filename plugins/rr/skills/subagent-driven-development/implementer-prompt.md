@@ -2,6 +2,7 @@
 
 Use this template when dispatching an implementer subagent.
 
+**Agent tool mode** (no ZAI_API_KEY):
 ```
 Agent tool call:
   subagent_type: general-purpose
@@ -78,3 +79,26 @@ Agent tool call:
     - Self-review findings (if any)
     - Any issues or concerns
 ```
+
+**Z.AI dispatch mode** (ZAI_API_KEY set):
+```bash
+${CLAUDE_PLUGIN_ROOT}/scripts/zai-dispatch.sh \
+  "You are implementing Task N: [task name]
+
+## Task Description
+[FULL TEXT of task]
+
+## Context
+[Scene-setting]
+
+## Your Job
+1. Implement exactly what the task specifies
+2. Write tests
+3. Verify implementation works
+4. Commit your work
+5. Self-review: completeness, quality, discipline, testing
+6. Report what you implemented, files changed, test results" \
+  /opt/pytek
+```
+
+Check `ZAI_API_KEY` at skill start — use same mode for all tasks in the session.
