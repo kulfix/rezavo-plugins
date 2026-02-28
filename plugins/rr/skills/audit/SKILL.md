@@ -43,7 +43,7 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 | Paranoik | Paranoik - tenant debugger | Tenant isolation on scoped files |
 | Dr. House | Dr. House - test auditor | Test quality for new/changed tests |
 | DBA | DBA - migration reviewer | New Alembic migrations only |
-| Diogenes | Diogenes - code simplifier | Code clarity, reuse, efficiency — produces REPORT (does NOT edit files) |
+| Diogenes | Diogenes - simplicity auditor | Code clarity, reuse, efficiency — produces REPORT (does NOT edit files) |
 
 ## Agent Prompt
 
