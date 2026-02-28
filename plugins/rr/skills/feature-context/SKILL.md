@@ -34,7 +34,7 @@ files:
 Example: `main → feature/A → feature/B`. Feature B's `base_branch: feature/A`.
 `finishing-a-development-branch` reads `base_branch` to target PRs correctly.
 
-Sections:
+Sections (during development):
 
 ```markdown
 # Feature Name
@@ -44,6 +44,41 @@ Sections:
 ## Założenia / pomysły
 ```
 
+Sections (after finishing — business documentation):
+
+```markdown
+# Feature Name
+
+## Co to jest
+1-2 zdania: co robi ten feature z perspektywy użytkownika/biznesu.
+
+## Po co to
+Jaki problem biznesowy rozwiązuje. Co było wcześniej i dlaczego nie wystarczało.
+
+## Co można zrobić
+Lista możliwości z perspektywy użytkownika (admina, developera etc.).
+NIE opisuj implementacji — opisz CO użytkownik może zrobić i JAK.
+Każda możliwość = krótki opis + przykład użycia.
+
+## Jak używać
+Krok po kroku dla każdej grupy użytkowników:
+- Dla użytkownika końcowego: co kliknąć, co wpisać
+- Dla developera: jak rozszerzyć, jakie API wywołać (endpoint + payload)
+
+## Decyzje
+Tabela kluczowych decyzji:
+| Decyzja | Dlaczego |
+|---------|----------|
+| X zamiast Y | Uzasadnienie biznesowe/techniczne |
+
+## Nie w scope
+Co świadomie pominięto i dlaczego.
+```
+
+**WAŻNE:** Dokumentacja powinna opisywać feature z perspektywy BIZNESOWEJ i UŻYTKOWEJ.
+NIE dokumentuj kodu (architektura, diagramy klas, ścieżki plików).
+Dokumentuj CO można zrobić, JAK tego używać, DLACZEGO takie decyzje.
+
 ## When to Update
 
 | Workflow step | Action |
@@ -52,7 +87,7 @@ Sections:
 | **Writing plans** | Add plan path to `plans:` |
 | **Executing plans** (after each task) | Update `files:`, "Co zrobione", "TODO", set `status: in_progress` |
 | **Bug found** | Add to "Known issues" |
-| **Finishing branch** | Set `status: done`, final "Co zrobione", clean "TODO" |
+| **Finishing branch** | Set `status: done`, **zastąp sekcje dev (Co zrobione/TODO/Known issues) sekcjami dokumentacji biznesowej** (Co to jest/Po co to/Co można zrobić/Jak używać/Decyzje/Nie w scope) |
 
 ## Updating `files:`
 
