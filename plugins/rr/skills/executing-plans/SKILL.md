@@ -56,7 +56,7 @@ After ALL tasks complete and verified:
 3. Fix any Critical/Important findings from audit
 4. Then use `rr:finishing-a-development-branch` to complete
 
-**DO NOT create PR or merge without completing /audit.**
+**DO NOT proceed to finishing-a-development-branch without completing /audit.**
 
 ## When to Stop and Ask for Help
 
@@ -88,7 +88,7 @@ Do NOT stop for:
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start, update per task, update at end
 - **simplify** - REQUIRED: Run after last task, before audit
-- **audit** - REQUIRED: Run after simplify, before merge/PR
+- **audit** - REQUIRED: Run after simplify, before finishing branch
 - **rr:using-git-worktrees** - Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:finishing-a-development-branch** - Complete development after audit passes

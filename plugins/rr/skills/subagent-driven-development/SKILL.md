@@ -258,7 +258,7 @@ After all tasks complete, before final code review:
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
 - **simplify** - REQUIRED: Run after last task, before final review
-- **audit** - REQUIRED: Run after final review, before merge/PR
+- **audit** - REQUIRED: Run after final review, before finishing branch
 - **rr:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:requesting-code-review** - Code review template for reviewer subagents
