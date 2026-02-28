@@ -36,7 +36,7 @@ Pass arguments through to `rr:audit`.
 
 1. Invoke `rr:audit` skill (pass scope arguments through)
 2. Audit creates tasks from findings
-3. Execute all tasks — fix every finding
+3. Execute all tasks as **Sonnet subagents** (one Agent per task, `model: "sonnet"`)
 4. Commit: `fix: audit round 1 — [summary of fixes]`
 5. Save report: `.ai/audit/round-1.md`
 
@@ -44,7 +44,7 @@ Pass arguments through to `rr:audit`.
 
 1. Invoke `rr:audit` again (same scope)
 2. New findings = new tasks
-3. Execute all tasks — fix every finding
+3. Execute all tasks as **Sonnet subagents**
 4. Commit: `fix: audit round 2 — [summary of fixes]`
 5. Save report: `.ai/audit/round-2.md`
 6. In report, note which findings are NEW vs REMAINING from round 1
@@ -53,8 +53,22 @@ Pass arguments through to `rr:audit`.
 
 1. Invoke `rr:audit` again (same scope)
 2. If clean → note "clean pass" in report
-3. If findings remain → fix them, commit: `fix: audit round 3 — final cleanup`
+3. If findings remain → fix them as **Sonnet subagents**, commit: `fix: audit round 3 — final cleanup`
 4. Save report: `.ai/audit/round-3.md`
+
+### Fixing Tasks — Sonnet Subagents
+
+Dispatch each fix task as a `general-purpose` Agent with `model: "sonnet"`.
+Auditors find bugs on Sonnet — fixers don't need Opus for routine corrections.
+
+```
+Agent tool call per task:
+  subagent_type: general-purpose
+  model: sonnet
+  prompt: "Fix: [task description from TaskCreate]. File: [path]. Problem: [what]. Fix: [how]."
+```
+
+Run independent fix tasks in parallel where possible. Wait for all to complete before committing.
 
 ### Report File Format
 

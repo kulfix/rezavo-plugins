@@ -62,7 +62,7 @@ Focus ONLY on scoped files, not legacy code.
 2. Dispatch 6 Agent tool calls — ONE message, parallel
 3. Wait for all results
 4. Collect all findings from all agents
-5. Triage: mark each finding as MUST FIX or FALSE POSITIVE (with reason)
+5. Triage (main session / Opus): mark each finding as MUST FIX or FALSE POSITIVE (with reason)
 6. Create tasks from findings (see below)
 7. Show audit summary
 
