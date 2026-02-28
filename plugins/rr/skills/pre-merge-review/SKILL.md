@@ -56,29 +56,19 @@ Pass arguments through to `rr:audit`.
 3. If findings remain → fix them as **Sonnet subagents**, commit: `fix: audit round 3 — final cleanup`
 4. Save report: `.ai/audit/round-3.md`
 
-### Fixing Tasks — Dispatch Mode
+### Fixing Tasks — Sonnet Subagents
 
-Fix tasks follow the same dispatch mode as audit (check `ZAI_API_KEY`).
+Dispatch each fix task as a `general-purpose` Agent with `model: "sonnet"`.
+Auditors find bugs on Sonnet — fixers don't need Opus for routine corrections.
 
-**Agent tool mode** (no ZAI_API_KEY):
 ```
 Agent tool call per task:
   subagent_type: general-purpose
   model: sonnet
-  prompt: "Fix: [task description]. File: [path]. Problem: [what]. Fix: [how]."
-```
-
-**Z.AI dispatch mode** (ZAI_API_KEY set):
-```bash
-# Per task — run independent fixes in parallel (run_in_background: true)
-${CLAUDE_PLUGIN_ROOT}/scripts/zai-dispatch.sh \
-  "Fix: [task description]. File: [path]. Problem: [what]. Fix: [how]." \
-  /opt/pytek
+  prompt: "Fix: [task description from TaskCreate]. File: [path]. Problem: [what]. Fix: [how]."
 ```
 
 Run independent fix tasks in parallel where possible. Wait for all to complete before committing.
-
-**SEQUENTIAL fixes:** If fix B depends on fix A (same file), run them sequentially.
 
 ### Report File Format
 

@@ -28,38 +28,31 @@ Before anything else:
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute ALL Tasks — Dispatch Mode
+### Step 2: Execute ALL Tasks via Sonnet Subagents
 
-Check `ZAI_API_KEY` at start — determines dispatch mode for ALL tasks.
-
-**Agent tool mode** (no ZAI_API_KEY):
-```
-Agent tool call:
-  subagent_type: general-purpose
-  model: sonnet
-  prompt: |
-    Task: [task subject]
-    [full task description from plan]
-    Project root: [cwd]
-    Verify: [verification steps from plan]
-```
-
-**Z.AI dispatch mode** (ZAI_API_KEY set):
-```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/zai-dispatch.sh \
-  "Task: [subject]. [full description]. Project root: [cwd]. Verify: [steps]." \
-  /opt/pytek
-```
+Dispatch each task as a **Sonnet subagent** (`model: "sonnet"`, `subagent_type: "general-purpose"`).
+The plan is already written — Sonnet implements, Opus orchestrates.
 
 For each task:
 1. Mark as in_progress
-2. Dispatch via chosen mode (Agent tool OR Z.AI)
-3. When done: review result, verify it worked
+2. Dispatch as Sonnet subagent with full task context:
+   ```
+   Agent tool call:
+     subagent_type: general-purpose
+     model: sonnet
+     prompt: |
+       Task: [task subject]
+       [full task description from plan]
+       Project root: [cwd]
+       Feature file: [path]
+       Verify: [verification steps from plan]
+   ```
+3. When subagent completes: review result, verify it worked
 4. Mark as completed
 5. Update feature file `files:` with changed files
 6. Move to next task immediately
 
-**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple in parallel.
+**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple Sonnet subagents in parallel.
 **Sequential tasks:** If task N depends on task N-1, wait for completion before dispatching.
 
 **Only stop if blocked** — see "When to Stop" below.

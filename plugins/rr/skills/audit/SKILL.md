@@ -11,34 +11,10 @@ description: >
 
 ## Overview
 
-Dispatch 6 auditors in parallel. Collect findings. Create tasks. Done.
+Dispatch 6 Agent tool calls in ONE message. Each reviews a different aspect.
+Collect findings. Create TaskCreate per finding. Done.
 
 Fixing = separate step (user runs tasks manually or via executing-plans).
-
-## Dispatch Mode
-
-Auditors can run via **Agent tool** (Anthropic) or **Z.AI dispatch** (cheaper).
-
-| Mode | When | How |
-|------|------|-----|
-| **Agent tool** | `ZAI_API_KEY` not set | `Agent tool (model: sonnet, subagent_type: ...)` |
-| **Z.AI dispatch** | `ZAI_API_KEY` is set | `Bash(zai-dispatch.sh "prompt" cwd)` in background |
-
-**Check at start:** Run `echo $ZAI_API_KEY` — if set, use Z.AI dispatch. If empty, fall back to Agent tool.
-
-### Z.AI dispatch details
-
-Script: `${CLAUDE_PLUGIN_ROOT}/scripts/zai-dispatch.sh`
-
-```bash
-# Dispatch one auditor (run 6 in parallel with run_in_background: true)
-Bash:
-  command: ${CLAUDE_PLUGIN_ROOT}/scripts/zai-dispatch.sh "You are Fletcher... [prompt]" /opt/pytek
-  run_in_background: true
-```
-
-Each auditor runs as a separate `claude -p` process with GLM-5 backend.
-Wait for all 6 to finish, then collect output and proceed to triage.
 
 ## Scope Resolution
 
@@ -92,11 +68,10 @@ Focus ONLY on scoped files, not legacy code.
 ## Execution
 
 1. Resolve scope (files + plans)
-2. Check `ZAI_API_KEY` — determines dispatch mode
-3. Dispatch 6 auditors in parallel (Agent tool OR Z.AI dispatch)
-4. Wait for all results
-5. Collect all findings from all agents
-6. Triage (main session): mark each finding as MUST FIX or FALSE POSITIVE (with reason)
+2. Dispatch 6 Agent tool calls — ONE message, parallel
+3. Wait for all results
+4. Collect all findings from all agents
+5. Triage (main session / Opus): mark each finding as MUST FIX or FALSE POSITIVE (with reason)
 6. Create tasks from findings (see below)
 7. Show audit summary
 
