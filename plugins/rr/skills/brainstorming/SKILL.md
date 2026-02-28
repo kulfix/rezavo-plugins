@@ -23,32 +23,35 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-3. **Propose 2-3 approaches** — with trade-offs and your recommendation
-4. **Present design** — in sections scaled to their complexity, get user approval after each section
-5. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
-6. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+1. **Load feature context** — use `feature-context` skill, read existing feature file or note that one needs creating
+2. **Explore project context** — check files, docs, recent commits
+3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+4. **Propose 2-3 approaches** — with trade-offs and your recommendation
+5. **Present design** — in sections scaled to their complexity, get user approval after each section
+6. **Write design doc + feature file** — save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create/update `.ai/features/<name>.md` with `status: planned` and plan path, commit both
+7. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
 ```dot
 digraph brainstorming {
+    "Load feature context" [shape=box];
     "Explore project context" [shape=box];
     "Ask clarifying questions" [shape=box];
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write design doc" [shape=box];
+    "Write design doc + feature file" [shape=box];
     "Invoke writing-plans skill" [shape=doublecircle];
 
+    "Load feature context" -> "Explore project context";
     "Explore project context" -> "Ask clarifying questions";
     "Ask clarifying questions" -> "Propose 2-3 approaches";
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Invoke writing-plans skill";
+    "User approves design?" -> "Write design doc + feature file" [label="yes"];
+    "Write design doc + feature file" -> "Invoke writing-plans skill";
 }
 ```
 
@@ -84,18 +87,9 @@ Before starting brainstorming:
 
 ## After the Design
 
-**Documentation:**
-- Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+This is covered by checklist step 6 — write design doc AND feature file in the same step, commit both together. Then step 7 invokes writing-plans.
 
-**Feature file:**
-- Create or update `.ai/features/<feature-name>.md` with status, branch, plan paths
-- Use `feature-context` skill
-
-**Implementation:**
-- Invoke the rr:writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+Do NOT invoke any implementation skill. writing-plans is the ONLY next step.
 
 ## Key Principles
 

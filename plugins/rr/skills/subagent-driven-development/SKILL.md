@@ -37,9 +37,20 @@ digraph when_to_use {
 
 ## The Process
 
+### Step 0: Load Feature Context (REQUIRED)
+
+Before anything else:
+1. Use `feature-context` skill to find and read the active feature file for this branch
+2. Read the feature file content — understand status, blocked_by, plans
+3. This step is NON-NEGOTIABLE — even after context restore
+
+### Execution Flow
+
 ```dot
 digraph process {
     rankdir=TB;
+
+    "Load feature context (Step 0)" [shape=box style=filled fillcolor=lightyellow];
 
     subgraph cluster_per_task {
         label="Per Task";
@@ -53,14 +64,17 @@ digraph process {
         "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
-        "Mark task complete in TodoWrite" [shape=box];
+        "Mark task complete, update feature file files:" [shape=box];
     }
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
+    "Run simplify" [shape=box];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
+    "Update feature file + run /audit" [shape=box style=filled fillcolor=lightyellow];
     "Use rr:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
+    "Load feature context (Step 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
@@ -74,11 +88,13 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
+    "Code quality reviewer subagent approves?" -> "Mark task complete, update feature file files:" [label="yes"];
+    "Mark task complete, update feature file files:" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use rr:finishing-a-development-branch";
+    "More tasks remain?" -> "Run simplify" [label="no"];
+    "Run simplify" -> "Dispatch final code reviewer subagent for entire implementation";
+    "Dispatch final code reviewer subagent for entire implementation" -> "Update feature file + run /audit";
+    "Update feature file + run /audit" -> "Use rr:finishing-a-development-branch";
 }
 ```
 
@@ -227,13 +243,26 @@ Done!
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
 
+## Per-Task Feature File Update
+
+After each task is marked complete, update the feature file `files:` field with files created or significantly modified by that task. This ensures `rr:audit` can scope its review properly instead of falling back to a noisy full branch diff.
+
+## Simplify Pass (REQUIRED)
+
+After all tasks complete, before final code review:
+- Run `/simplify` to auto-fix code reuse, quality, and efficiency issues
+- This cleans up implementation before reviewers see it
+
 ## Integration
 
 **Required workflow skills:**
+- **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
+- **simplify** - REQUIRED: Run after last task, before final review
+- **audit** - REQUIRED: Run after final review, before merge/PR
 - **rr:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:requesting-code-review** - Code review template for reviewer subagents
-- **rr:finishing-a-development-branch** - Complete development after all tasks
+- **rr:finishing-a-development-branch** - Complete development after audit passes
 
 **Subagents should use:**
 - **rr:test-driven-development** - Subagents follow TDD for each task

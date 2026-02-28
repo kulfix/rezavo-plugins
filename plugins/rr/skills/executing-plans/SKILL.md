@@ -49,7 +49,13 @@ Based on feedback:
 - Execute next batch
 - Repeat until complete
 
-### Step 5: Update Feature File & Audit (REQUIRED)
+### Step 5: Simplify (REQUIRED)
+
+After all tasks complete, before audit:
+- Run `/simplify` to auto-fix code reuse, quality, and efficiency issues
+- This cleans up implementation before audit reviewers see it
+
+### Step 6: Update Feature File & Audit (REQUIRED)
 
 After ALL tasks complete and verified:
 1. Update feature file status (use `feature-context` skill)
@@ -86,13 +92,14 @@ After ALL tasks complete and verified:
 - Between batches: just report and wait
 - Stop when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: update feature file + run /audit
+- After last task: simplify → update feature file + run /audit
 
 ## Integration
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start, update at end
-- **audit** - REQUIRED: Run after last task, before merge/PR
+- **simplify** - REQUIRED: Run after last task, before audit
+- **audit** - REQUIRED: Run after audit, before merge/PR
 - **rr:using-git-worktrees** - Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:finishing-a-development-branch** - Complete development after audit passes
