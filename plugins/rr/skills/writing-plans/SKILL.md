@@ -130,7 +130,7 @@ After saving the plan, offer execution choice:
 **Which approach?"**
 
 **If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
+- **REQUIRED SUB-SKILL:** Use rr:subagent-driven-development
 - Stay in this session
 - Fresh subagent per task + code review
 

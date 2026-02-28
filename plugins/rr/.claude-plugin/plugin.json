@@ -1,7 +1,7 @@
 {
   "name": "rr",
   "version": "1.0.0",
-  "description": "Rezavo workflow overrides — extends superpowers with feature-context and audit integration",
+  "description": "Rezavo workflow — full fork of superpowers 4.3.1 with feature-context and audit",
   "author": {
     "name": "Rezavo"
   }

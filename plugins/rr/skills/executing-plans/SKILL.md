@@ -93,6 +93,6 @@ After ALL tasks complete and verified:
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start, update at end
 - **audit** - REQUIRED: Run after last task, before merge/PR
-- **superpowers:using-git-worktrees** - Set up isolated workspace before starting
+- **rr:using-git-worktrees** - Set up isolated workspace before starting
 - **rr:writing-plans** - Creates the plan this skill executes
 - **rr:finishing-a-development-branch** - Complete development after audit passes
