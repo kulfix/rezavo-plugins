@@ -5,30 +5,13 @@ description: Use when finishing a feature that touches UI, templates, HTML, fron
 
 # Visual Verification
 
-## Overview
-
 Screenshots prove features work. Text descriptions don't.
 
 **Core principle:** If you changed something users can see, screenshot it before claiming it works.
 
+**Decision rule:** If ANY changed file (`.html`, `.jsx`, `.tsx`, `.jinja`, `.css`) produces HTML that a user sees — visual verification required.
+
 **Announce at start:** "Running visual verification — taking Playwright screenshots of UI changes."
-
-## When to Use
-
-**Use when feature changes ANY of:**
-- Frontend components (React, Vue, etc.)
-- HTML templates (Jinja, Liquid, etc.)
-- Landing pages, email templates rendered in browser
-- Admin panels, dashboards
-- Error pages, status pages
-- CSS/styling changes
-
-**Skip when:**
-- Pure backend (API-only, migrations, background jobs, CLI tools)
-- No user-visible rendering changes
-- Feature file `files:` contains zero template/frontend files
-
-**Decision rule:** If ANY changed file produces HTML that a user sees — visual verification required.
 
 ## The Process
 
@@ -42,113 +25,74 @@ UI touchpoints for this feature:
 2. [page/template] — [what changed]
 ```
 
-If you think there are zero UI touchpoints but changed files include `.html`, `.jsx`, `.tsx`, `.jinja`, `.liquid`, template strings, or CSS — you are wrong. Re-check.
+### Step 2: Start App in Docker
 
-### Step 2: Load Playwright and Navigate
+<HARD-RULE>
+Docker is the ONLY way. Staging/dev servers run `main`, not your feature branch. Docker has your code via volume mounts + controlled seed data. No excuses — start it.
+</HARD-RULE>
+
+```bash
+./cli.py test up --no-build          # Fast (cached images)
+./cli.py test up                     # Full rebuild
+```
+
+| Service | Host port | URL |
+|---------|-----------|-----|
+| Backend API | 5002 | `http://localhost:5002` |
+| React Frontend | 3003 | `http://localhost:3003` |
+
+**Verify:** `docker compose -f docker-compose.test.yml ps` — all "healthy".
+
+**Seed credentials** (`tests/fixtures/e2e-seed.sql`):
+
+| User | Password | Role |
+|------|----------|------|
+| admin | Admin123456789! | super_admin |
+| e2e_admin | Test123456!@# | tenant_admin |
+| e2e_operator | Test123456!@# | operator |
+| e2e_tenant_b_op | Test123456!@# | operator (tenant B) |
+
+### Step 3: Playwright MCP Screenshots
 
 1. Load Playwright MCP tools via ToolSearch
-2. Navigate to dev environment URL (from CLAUDE.md or project config)
-3. Login if required (credentials from CLAUDE.md)
-4. Seed test data if needed
+2. Navigate to `http://localhost:3003/`, login with seed credentials
+3. For each touchpoint, screenshot:
 
-### Step 3: Screenshot Each Touchpoint
-
-For each UI touchpoint:
-
-| What to capture | Why |
-|-----------------|-----|
-| Default/loaded state | Proves page renders |
-| Key interaction result | Proves feature works |
+| Capture | Why |
+|---------|-----|
+| Default state | Proves page renders |
+| Key interaction | Proves feature works |
 | Per-tenant variation | Proves multi-tenant works |
-| Error/edge states | Proves error handling works |
+| Error/edge states | Proves error handling |
+
+4. After EACH screenshot — read the image, confirm correctness. Fix if wrong.
 
 **Save to:** `.ai/screenshots/<branch-name>/`
-**Naming:** `<page>-<state>-<variant>.png`
-**Example:** `landing-default-tenant1.png`, `offer-error-expired.png`
+**Naming:** `<page>-<state>.png` (e.g., `users-edit-modal.png`)
 
-### Step 4: Verify Each Screenshot
-
-After EACH screenshot, read the image and confirm:
-- Page rendered correctly (no broken layout, missing elements)
-- Content is correct (right data, right tenant branding)
-- No visual errors (console errors, 500 pages, blank sections)
-
-If something is wrong — FIX before proceeding. Screenshots are evidence, not decoration.
-
-### Step 5: Commit and Reference
+### Step 4: Commit and Reference
 
 ```bash
 git add .ai/screenshots/<branch-name>/
 git commit -m "docs: visual verification screenshots"
+./cli.py test down                   # Cleanup
 ```
 
-For PR body, add Screenshots section:
-
-```markdown
-## Screenshots
-
-### [Feature/Page Name]
-![Description](.ai/screenshots/<branch-name>/filename.png)
-```
-
-GitHub renders images from branch — relative paths work.
-
-## Test Plan Evidence Rule
-
-<HARD-RULE>
-Every Test Plan checkbox MUST have evidence. Bare `[x]` without proof = lie.
-</HARD-RULE>
-
-| Evidence type | Use for |
-|---------------|---------|
-| Screenshot reference | UI/visual claims |
-| Command output with counts | Test pass claims |
-| CI run link | CI validation claims |
-| curl/API output | API behavior claims |
-
-```markdown
-## Test Plan
-
-- [x] Landing page renders correctly — see screenshots above
-- [x] All tests pass (79/79) — `./cli.py test run` output attached
-- [x] CI validates — [Run #42](link)
-```
-
-NEVER:
-```markdown
-- [x] Landing page renders correctly
-- [x] Tests pass
-```
+PR body: add `## Screenshots` section with `![desc](.ai/screenshots/<branch-name>/file.png)`.
 
 ## Red Flags — STOP
 
 | Thought | Reality |
 |---------|---------|
+| "I don't have a running instance" | `./cli.py test up`. Done. |
+| "Staging doesn't have my branch" | Staging NEVER has your branch. Docker. |
+| "This is primarily backend" | "Primarily" ≠ "purely". Frontend files changed? Screenshot. |
 | "Unit tests cover this" | Unit tests don't verify visual rendering |
-| "I don't have a running instance" | Dev environment exists — use it |
-| "It needs real data" | Seed test data, use fixtures |
-| "Playwright isn't set up" | MCP Playwright is available — ToolSearch for it |
-| "Screenshots are too much work" | 5 minutes of screenshots save reviewer hours |
-| "This is backend-only" | If ANY template/HTML/frontend changed — NOT backend-only |
 | "I'll describe what it looks like" | Description ≠ evidence. Screenshot it. |
-| "Test Plan checkboxes are enough" | Checkboxes without evidence are unverified claims |
-| "The feature is too complex to screenshot" | Break into individual pages. Screenshot each. |
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| Screenshot only happy path | Include error states, per-tenant variations |
-| Screenshot but don't verify image | READ each screenshot, confirm it's correct |
-| Save screenshots but skip PR reference | Add `## Screenshots` section with image links |
-| Skip for "small" UI changes | Small changes break layouts. Screenshot. |
-| Login page screenshot instead of feature | Navigate to the ACTUAL feature page |
-| Screenshot after PR is created | Screenshots BEFORE PR — they go in PR body |
+| "Screenshots are too much work" | 5 minutes of screenshots save reviewer hours |
+| "The feature is too complex" | Break into individual pages. Screenshot each. |
 
 ## Integration
 
-**Called by:** `finishing-a-development-branch` (Step 3, after test verification)
-
-**Pairs with:**
-- `verification-before-completion` — screenshots ARE verification evidence
-- `pre-merge-review` — code quality + visual quality = complete review
+**Called by:** `finishing-a-development-branch` (Step 3)
+**Pairs with:** `verification-before-completion`, `pre-merge-review`
