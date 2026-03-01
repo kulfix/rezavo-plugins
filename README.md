@@ -4,11 +4,11 @@ Plugin marketplace for Rezavo project.
 
 ## Plugins
 
-### rr (v1.14.0)
+### rr (v2.0.0)
 
-Workflow engine: 19 skilli, 8 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
+Workflow engine: 20 skilli, 5 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
 
-### rrz (v1.7.0)
+### rrz (v2.0.0)
 
 Z.AI compatible fork of rr — no `model:` params, works with any backend.
 
@@ -77,7 +77,7 @@ Te pluginy duplikują to co rr robi lepiej:
 | `superpowers` | rr jest forkiem superpowers | rr = superpowers + custom |
 | `code-review` | Generyczny review | rr:Fletcher |
 | `pr-review-toolkit` | 6 generycznych agentów | rr:Fletcher + Javert + Paranoik |
-| `code-simplifier` | Simplify agent | rr:Diogenes |
+| `code-simplifier` | Simplify agent | rr:Fletcher (sekcja Simplicity) |
 | `feature-dev` | Generyczny workflow | rr:brainstorming + writing-plans + executing-plans |
 | `security-guidance` | PreToolUse hook | rr:Paranoik |
 
@@ -101,7 +101,7 @@ Projekt miał legacy komendy w `.claude/commands/` sprzed rr. Zostały usunięte
 | Usunięta komenda | Odpowiednik w rr |
 |------------------|------------------|
 | `/fix` | `rr:systematic-debugging` + `rr:test-driven-development` |
-| `/security-audit` | `rr:audit` (6 agentów: Fletcher, Javert, Paranoik, Dr. House, DBA, Diogenes) |
+| `/security-audit` | `rr:audit` (3 agentów: Fletcher, Javert, Paranoik) |
 | `/verify` | `rr:audit` + `rr:pre-merge-review` |
 
 Jedyna pozostała komenda projektowa: `/update-pytek-plugin` (porównanie rr z upstream superpowers).

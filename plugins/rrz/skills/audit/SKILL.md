@@ -7,11 +7,11 @@ description: >
 
 # Audit
 
-6 auditors in parallel produce findings. Findings become tasks.
+3 auditors in parallel produce findings. Findings become tasks.
 
 ## Overview
 
-Dispatch 6 Agent tool calls in ONE message. Each reviews a different aspect.
+Dispatch 3 Agent tool calls in ONE message. Each reviews a different aspect.
 Collect findings. Create TaskCreate per finding. Done.
 
 Fixing = separate step (user runs tasks manually or via executing-plans).
@@ -47,12 +47,9 @@ Git diff fallback is ONLY for when `files:` is empty or missing.
 
 | Agent | subagent_type | Reviews |
 |-------|---------------|---------|
-| Fletcher | Fletcher - code reviewer | Code quality on scoped files |
-| Javert | Javert - completeness auditor | Spec (`plans:`) vs implementation |
-| Paranoik | Paranoik - tenant debugger | Tenant isolation on scoped files |
-| Dr. House | Dr. House - test auditor | Test quality for new/changed tests |
-| DBA | DBA - migration reviewer | New Alembic migrations only |
-| Diogenes | Diogenes - simplicity auditor | Code clarity, reuse, efficiency — produces REPORT (does NOT edit files) |
+| Fletcher | Fletcher - code reviewer | Code quality, simplicity, schema on scoped files |
+| Paranoik | Paranoik - security auditor | Security, tenant isolation, migrations on scoped files |
+| Javert | Javert - completeness auditor | Spec vs implementation + test quality gate |
 
 ## Agent Prompt
 
@@ -68,7 +65,7 @@ Focus ONLY on scoped files, not legacy code.
 ## Execution
 
 1. Resolve scope (files + plans)
-2. Dispatch 6 Agent tool calls — ONE message, parallel
+2. Dispatch 3 Agent tool calls — ONE message, parallel
 3. Wait for all results
 4. Collect all findings from all agents
 5. Triage (main session): mark each finding as MUST FIX, FALSE POSITIVE, or DEFERRED (with reason)
@@ -145,11 +142,8 @@ Branch: [current branch]
 Scope: [N files]
 
 Fletcher:  [TEMPO/DRAGGING/RUSHING]          — X findings
-Javert:    [DELIVERED/INCOMPLETE]             — X/Y requirements met
 Paranoik:  [ISOLATED/SUSPICIOUS/COMPROMISED]  — X findings
-Dr. House: [HEALTHY/SYMPTOMATIC/TERMINAL]     — X findings
-DBA:       [SAFE/RISKY/DANGEROUS]             — X findings
-Diogenes:  [CLEAN/SIMPLIFIED/COMPLEX]         — X findings
+Javert:    [DELIVERED/INCOMPLETE/ABANDONED]   — X/Y requirements met
 
 Total: X findings → Y tasks created, Z false positives, W deferred
 
@@ -196,7 +190,6 @@ Recommend running `/audit` again after fixing all tasks to verify no regressions
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |
 | Skipping findings as "pre-existing" | Use DEFERRED with proposed fix, not FALSE POSITIVE |
 | Inventing triage categories | ONLY 3 exist: MUST FIX, FALSE POSITIVE, DEFERRED. No "accepted", "duplicate", "low-risk", "suggestion", "nice-to-have" |
-| Diogenes editing files directly | Diogenes produces REPORT only |
 | Running on wrong branch | Verify branch matches feature file `branch:` field |
 | Fixing inside audit | Audit ONLY reports and creates tasks. Fixing is separate. |
 

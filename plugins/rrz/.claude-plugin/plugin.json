@@ -1,6 +1,6 @@
 {
   "name": "rrz",
-  "version": "1.7.0",
+  "version": "2.0.0",
   "description": "Z.AI compatible fork of rr workflow plugin — no model params, works with any backend",
   "author": {
     "name": "Rezavo"

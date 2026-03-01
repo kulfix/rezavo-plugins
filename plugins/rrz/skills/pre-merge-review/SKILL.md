@@ -2,22 +2,22 @@
 name: pre-merge-review
 description: >
   Use as the final quality step before PR creation.
-  Runs 3 audit rounds with fixes between them, produces reports and summary.
+  Runs 2 audit rounds (R2 conditional) with 3 auditors, produces reports and summary.
 ---
 
 # Pre-Merge Review
 
-3-round audit cycle: audit → fix → report × 3, then summary.
+2-round audit cycle: audit → fix → report, then conditional R2, then summary.
 
 ## Overview
 
-Orchestrate 3 rounds of `/audit` + fix. Each round:
-1. Run `rrz:audit` (6 agents, findings, triage, tasks)
+Orchestrate up to 2 rounds of `/audit` + fix. Each round:
+1. Run `rrz:audit` (3 agents, findings, triage, tasks)
 2. Execute all tasks (fix findings)
 3. Commit fixes
 4. Save audit report to file
 
-After 3 rounds: generate summary + present to user. Done.
+After rounds: generate summary + present to user. Done.
 
 Pre-merge-review does NOT create PRs — that's the caller's responsibility (executing-plans or user).
 
@@ -38,9 +38,8 @@ All reports go in `.ai/audit/<branch-name>/` (branch `/` → `-`):
 ```
 .ai/audit/<branch-name>/
 ├── round-1.md
-├── round-2.md
-├── round-3.md
-├── summary.md      ← generated after 3 rounds
+├── round-2.md       ← only if R1 had MUST FIX or DEFERRED
+├── summary.md
 └── issues.md        ← deferred findings (created by audit skill)
 ```
 
@@ -62,21 +61,15 @@ Clean up the branch directory before starting (if re-run). Preserve other branch
 4. Commit: `fix: audit round 1 — [summary of fixes]`
 5. Save report: `.ai/audit/<branch-name>/round-1.md`
 
-### Round 2
+### Round 2 (conditional — only if R1 had MUST FIX or DEFERRED)
 
-1. Invoke `rrz:audit` again (same scope)
-2. New findings = new tasks
-3. Execute all tasks as subagents
-4. Commit: `fix: audit round 2 — [summary of fixes]`
-5. Save report: `.ai/audit/<branch-name>/round-2.md`
-6. In report, note which findings are NEW vs REMAINING from round 1
+1. Invoke `rrz:audit` with ONLY Fletcher + Paranoik (2 agents, regression check)
+2. Focus: verify R1 fixes didn't introduce regressions
+3. If findings → new tasks → execute → commit: `fix: audit round 2 — [summary]`
+4. Save report: `.ai/audit/<branch-name>/round-2.md`
+5. In report, note which findings are NEW vs REMAINING from round 1
 
-### Round 3
-
-1. Invoke `rrz:audit` again (same scope)
-2. If clean → note "clean pass" in report
-3. If findings remain → fix them as subagents, commit: `fix: audit round 3 — final cleanup`
-4. Save report: `.ai/audit/<branch-name>/round-3.md`
+**Skip R2 if:** R1 had 0 MUST FIX AND 0 DEFERRED findings (clean pass).
 
 ### Fixing Tasks — Subagents
 
@@ -108,17 +101,14 @@ Each `round-N.md`:
 |---|-------|----------|------|---------|--------|
 | 1 | Fletcher | Critical | app/foo.py:42 | N+1 query | FIXED |
 | 2 | Paranoik | Important | app/bar.py:10 | Missing tenant check | FIXED |
-| 3 | Dr. House | Minor | tests/test_foo.py:5 | Weak assertion | FALSE POSITIVE — [reason] |
-| 4 | Fletcher | Important | app/bar.py:20 | Hardcoded URL | DEFERRED — pre-existing, extract to settings |
+| 3 | Fletcher | Minor | app/baz.py:5 | Naming | FALSE POSITIVE — [reason] |
+| 4 | Javert | Important | tests/test_foo.py | TQ-2 mock scope | DEFERRED — separate test refactor |
 
 ## Per-Agent Summary
 
 Fletcher:  [TEMPO/DRAGGING/RUSHING] — X findings
-Javert:    [DELIVERED/INCOMPLETE] — X/Y requirements
 Paranoik:  [ISOLATED/SUSPICIOUS/COMPROMISED] — X findings
-Dr. House: [HEALTHY/SYMPTOMATIC/TERMINAL] — X findings
-DBA:       [SAFE/RISKY/DANGEROUS] — X findings
-Diogenes:  [CLEAN/SIMPLIFIED/COMPLEX] — X findings
+Javert:    [DELIVERED/INCOMPLETE/ABANDONED] — X/Y requirements
 
 ## Result
 
@@ -127,7 +117,7 @@ X findings total: Y fixed, Z false positives, W deferred
 
 ### Generate Summary
 
-After all 3 rounds, generate `.ai/audit/<branch-name>/summary.md`:
+After rounds complete, generate `.ai/audit/<branch-name>/summary.md`:
 
 ```markdown
 # Pre-Merge Review Summary
@@ -144,10 +134,7 @@ X findings: Y fixed, Z false positive, W deferred
 | ... full table from round-1.md ... |
 
 ## Round 2
-[same format]
-
-## Round 3
-[same format]
+[same format, or "Skipped — R1 clean"]
 
 ## Totals
 
@@ -165,11 +152,8 @@ X findings: Y fixed, Z false positive, W deferred
 ## Per-Agent Final Rating
 
 Fletcher:  [final rating] — X total findings
-Javert:    [final rating] — X/Y requirements met
 Paranoik:  [final rating] — X total findings
-Dr. House: [final rating] — X total findings
-DBA:       [final rating] — X total findings
-Diogenes:  [final rating] — X total findings
+Javert:    [final rating] — X/Y requirements met
 ```
 
 ### Present to User
@@ -182,11 +166,11 @@ PRE-MERGE REVIEW COMPLETE
 Feature: [name]
 Branch: [branch]
 
-3-ROUND AUDIT
+2-ROUND AUDIT
 ─────────────
 Round 1: X findings → Y fixed, Z false positive, W deferred
 Round 2: X findings → Y fixed, Z false positive, W deferred
-Round 3: X findings (should be 0)
+         (or: "Skipped — R1 clean")
 
 TOTALS: X fixed, Y false positive, Z deferred
 
@@ -206,7 +190,8 @@ Do NOT ask "Approve for PR?" — the caller decides what to do next.
 
 | Mistake | Fix |
 |---------|-----|
-| Skipping rounds | ALWAYS run 3 rounds — fixes may introduce new issues |
+| Skipping R2 prematurely | R2 required if R1 had ANY MUST FIX or DEFERRED |
+| Running R2 when R1 clean | Skip R2 if 0 MUST FIX and 0 DEFERRED — saves resources |
 | Not saving reports | Every round MUST produce a report file |
 | Reports in wrong directory | Use `.ai/audit/<branch-name>/`, not `.ai/audit/` |
 | Asking for PR approval | Pre-merge-review does NOT create PRs, just reports |

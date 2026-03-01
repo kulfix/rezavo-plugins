@@ -2,7 +2,6 @@
 name: workflow-monitor
 description: Monitors GitHub Actions workflows, waits for completion, and reports results with logs
 tools: Bash, BashOutput
-model: haiku
 permissionMode: acceptEdits
 ---
 
