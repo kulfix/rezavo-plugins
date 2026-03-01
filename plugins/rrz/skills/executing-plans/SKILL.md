@@ -22,23 +22,46 @@ Before anything else:
 2. Read the feature file content — understand status, blocked_by, plans
 3. This step is NON-NEGOTIABLE — even after context restore
 
-### Step 1: Load and Review Plan
+### Step 1: Baseline Tests (MANDATORY)
+
+Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of what passes/fails before you touch code.
+
+```bash
+# Backend tests
+./cli.py test up --no-build
+mkdir -p .ai/test-results/<branch-name>
+./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
+./cli.py test down
+
+# E2E tests
+./cli.py e2e up
+./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
+./cli.py e2e down
+
+# Resume backend Docker for task execution
+./cli.py test up --no-build
+```
+
+Parse pytest/playwright summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
+
+### Step 2: Load and Review Plan
 1. Read plan file (from feature file frontmatter `plans:`)
 2. Review critically - identify any questions or concerns about the plan
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute ALL Tasks via Subagents
+### Step 3: Execute ALL Tasks via Sonnet Subagents
 
-Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
-The plan is already written — subagents implement, orchestrator manages.
+Dispatch each task as a **Sonnet subagent** (`model: "sonnet"`, `subagent_type: "general-purpose"`).
+The plan is already written — Sonnet implements, Opus orchestrates.
 
 For each task:
 1. Mark as in_progress
-2. Dispatch as subagent with full task context:
+2. Dispatch as Sonnet subagent with full task context:
    ```
    Agent tool call:
      subagent_type: general-purpose
+     model: sonnet
      prompt: |
        Task: [task subject]
        [full task description from plan]
@@ -51,12 +74,12 @@ For each task:
 5. Update feature file `files:` with changed files
 6. Move to next task immediately
 
-**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple subagents in parallel.
+**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple Sonnet subagents in parallel.
 **Sequential tasks:** If task N depends on task N-1, wait for completion before dispatching.
 
 **Only stop if blocked** — see "When to Stop" below.
 
-### Step 3: Finish Feature File (REQUIRED)
+### Step 4: Finish Feature File (REQUIRED)
 
 After ALL tasks complete and verified:
 
@@ -64,7 +87,7 @@ After ALL tasks complete and verified:
 2. Set `status: done`, replace dev sections with business documentation sections
 3. Verify feature file contains: Co to jest, Po co to, Co można zrobić, Jak używać, Decyzje, Nie w scope
 
-### Step 4: Audit & PR (REQUIRED)
+### Step 5: Audit & PR (REQUIRED)
 
 1. **RUN `/pre-merge-review`** — 3 audit rounds, fixes between rounds, saves reports + summary + issues
 2. Push branch and create PR (target: `base_branch` from feature file)
@@ -125,13 +148,14 @@ Do NOT stop for:
 
 ## Remember
 - Load feature context FIRST (Step 0)
+- Run baseline tests (Step 1) — evidence before implementation
 - Review plan critically at start
 - Then execute ALL tasks without stopping
 - Follow plan steps exactly
 - Don't skip verifications
 - Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: finish feature file (Step 3) → /pre-merge-review → PR (Step 4)
+- After last task: finish feature file (Step 4) → /pre-merge-review → PR (Step 5)
 
 ## Integration
 

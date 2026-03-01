@@ -1,15 +1,15 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation and pre-merge-review are complete, to run final tests, visual verification, E2E, and create PR
 ---
 
 # Finishing a Development Branch
 
 ## Overview
 
-Guide completion of development work by presenting clear options and handling chosen workflow.
+Final gate before PR: verify tests, take screenshots, run E2E, auto-create PR.
 
-**Core principle:** Verify pre-merge-review → Update feature file → Verify tests → Visual verification → Present options → Execute choice → Clean up.
+**Core principle:** Verify gate → Update feature file → Visual verification (automatic) → Final tests + compare with baseline → E2E → Auto-PR.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -17,106 +17,120 @@ Guide completion of development work by presenting clear options and handling ch
 
 ### Step 0: Verify Gate Was Run (REQUIRED)
 
-Before finishing:
-1. Check if `/pre-merge-review` was run on this branch (look for `.ai/audit/<branch-name>/summary.md`)
-2. If NOT run — **STOP. Run `/pre-merge-review` first.** Do not proceed without it.
-3. Gate must have been approved by user before proceeding
+Check if `/pre-merge-review` was run (look for `.ai/audit/<branch-name>/summary.md`).
+If NOT — **STOP. Run `/pre-merge-review` first.**
 
 ### Step 1: Update Feature File
 
-Use `feature-context` skill to update the feature file:
-- Set status to `done` (or appropriate status)
-- Verify all plan items are reflected
+Use `feature-context` skill: set `status: done`, verify all plan items reflected.
 
-### Step 2: Verify Tests
-
-**Before presenting options, verify tests pass.**
-
-Use project's test command from CLAUDE.md (e.g. `./cli.py test run`). If E2E relevant, also run E2E (`./cli.py e2e test smoke`). See `rr:testing-guidelines` for details.
-
-**If tests fail:** Stop. Fix before proceeding.
-
-### Step 3: Visual Verification (if UI changes)
-
-Check if feature touches any user-visible rendering (templates, HTML, frontend, CSS, landing pages).
-
-**If YES:** Run `rr:visual-verification` skill. This will:
-1. Identify UI touchpoints from feature file and changed files
-2. Take Playwright MCP screenshots of each touchpoint
-3. Verify screenshots visually
-4. Commit screenshots to `.ai/screenshots/<branch-name>/`
-
-**If NO (pure backend):** Skip — but verify decision. If changed files include `.html`, `.jsx`, `.tsx`, `.jinja`, `.liquid`, template strings, or CSS — it HAS UI changes.
-
-Screenshots will be included in PR body (Step 6, Option 2).
-
-### Step 4: Determine Base Branch
-
-Read `base_branch` from feature file frontmatter (`.ai/features/<name>.md`).
-
-If not set, determine from git:
-```bash
-# Find the branch this feature branched from
-git log --oneline --decorate --first-parent | grep -m1 'origin/' | head -1
-```
-
-Or ask: "This branch appears to have split from `<branch>` - is that correct?"
-
-**Important:** The base branch is NOT always `main`. Feature branches can chain:
-`main → feature/A → feature/B`. In this case, feature/B's base is feature/A, not main.
-
-### Step 5: Present Options
-
-Present exactly these 4 options:
-
-```
-Implementation complete. What would you like to do?
-
-Base branch: <base-branch>
-
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request (target: <base-branch>)
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
-
-Which option?
-```
-
-**Don't add explanation** - keep options concise.
-
-### Step 6: Execute Choice
-
-#### Option 1: Merge Locally
+### Step 2: Start Backend Docker
 
 ```bash
-git checkout <base-branch>
-git pull
-git merge <feature-branch>
-# Verify tests on merged result
-<test command>
-# If tests pass
-git branch -d <feature-branch>
+./cli.py test up --no-build
 ```
 
-Then: Cleanup worktree (Step 7)
+Verify containers healthy before proceeding. Keep running through Steps 3-4.
 
-#### Option 2: Push and Create PR
+### Step 3: Visual Verification (AUTOMATIC)
+
+<HARD-RULE>
+NEVER ask if visual verification is needed. Check the diff automatically.
+If ANY frontend file changed — run visual verification. No exceptions.
+</HARD-RULE>
 
 ```bash
-# Push branch
+git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|css|scss|jinja)$'
+```
+
+- **Matches found:** Run `rr:visual-verification` skill. Docker is already running — skill should skip startup.
+- **No matches:** Skip. Log: "No frontend files in diff — skipping visual verification."
+
+### Step 4: Final Backend Tests
+
+```bash
+./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/final.log
+```
+
+Parse pytest summary. Extract failed test names to `final-failures.txt`.
+
+### Step 5: Compare Baseline vs Final
+
+<HARD-RULE>
+Never claim failures are "pre-existing" without baseline evidence.
+If baseline doesn't exist — ALL failures are unverified. WARN loudly.
+</HARD-RULE>
+
+Read `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
+
+| Situation | Action |
+|-----------|--------|
+| NEW failures (in final, not in baseline) | **STOP.** Must fix before proceeding. |
+| Pre-existing only (in both files) | Document with evidence. Continue. |
+| No baseline file | **WARN:** all failures unverified. Present to user. |
+| Zero failures | All green. Continue. |
+
+Print summary:
+```
+Backend tests: X passed, Y failed
+New failures: N (must fix) / 0 (clean)
+Pre-existing: M (evidence: .ai/test-results/<branch>/baseline-backend.log)
+```
+
+### Step 6: E2E Tests
+
+```bash
+./cli.py test down                    # Free ports for E2E Docker
+./cli.py e2e up
+./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/final-e2e.log
+./cli.py e2e down
+```
+
+Compare with baseline E2E (`baseline-e2e.log`) — same logic as Step 5:
+- NEW E2E failures (not in baseline) → **STOP.** Must fix.
+- Pre-existing E2E failures (in both) → Document with evidence. Continue.
+- No E2E baseline → **WARN.** All E2E failures unverified.
+
+### Step 7: Determine Base Branch
+
+Read `base_branch` from feature file frontmatter. If not set, determine from git.
+Base branch is NOT always `main` — chains like `main → feature/A → feature/B` are common.
+
+### Step 8: Push + Auto-PR (or Fallback)
+
+```bash
 git push -u origin <feature-branch>
-
-# Create PR targeting base branch (NOT always main!)
-gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 ```
 
-**Critical:** `--base <base-branch>` must be the actual base, not hardcoded `main`.
+**All gates pass → auto-create PR:**
 
-**PR body** — generate from available sources:
+```
+All gates passed. Creating PR.
 
-1. **Feature file** (`.ai/features/<name>.md`) → Summary + What was built
-2. **Audit summary** (`.ai/audit/<branch-name>/summary.md`) → Quality Audit
-3. **Issues** (`.ai/audit/<branch-name>/issues.md`) → Deferred Issues
+Audit: 3 rounds complete
+Backend: X passed, 0 new failures (Y pre-existing)
+E2E: PASSED
+Visual: N screenshots (or "skipped — no frontend changes")
+```
+
+**Any gate fails → present options:**
+
+```
+Some gates did not fully pass:
+
+[x] Pre-merge review: DONE
+[x] Feature file: status=done
+[ ] Backend tests: 2 NEW failures
+[x] E2E: PASSED
+[x] Visual verification: 6 screenshots
+
+1. Create PR anyway (with warnings)
+2. Fix failures first
+3. Keep branch as-is
+4. Discard work
+```
+
+**PR body template:**
 
 ```markdown
 ## Summary
@@ -126,12 +140,30 @@ gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 [From feature file: Co można zrobić — bullet points]
 
 ## Screenshots
-[From .ai/screenshots/<branch-name>/ — if visual verification was done]
-
-### [Page/Feature Name]
+[From .ai/screenshots/<branch-name>/ if visual verification done]
 ![Description](.ai/screenshots/<branch-name>/filename.png)
+[If no UI changes: "No frontend changes in this feature."]
 
-[If no UI changes: replace with "No UI changes in this feature."]
+## Test Results
+
+### Backend
+| Metric | Baseline | Final |
+|--------|----------|-------|
+| Passed | X | X |
+| Failed | Y | Y |
+| New failures | — | **0** |
+
+<details><summary>Pre-existing failures (N)</summary>
+
+- test_name_1
+- test_name_2
+
+Evidence: .ai/test-results/<branch>/baseline.log
+</details>
+
+### E2E
+- **Status:** PASSED (X passed, 0 failed)
+- **Log:** .ai/test-results/<branch>/e2e.log
 
 ## Quality Audit
 [From summary.md: totals + per-agent ratings]
@@ -145,93 +177,27 @@ gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 ## Deferred Issues
 [From issues.md: table, or "None"]
 
-## Test Plan
-[EVERY checkbox MUST have evidence — screenshot reference, command output, or CI link]
-- [x] [claim] — [evidence: screenshot above / command output / CI link]
-
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-If any source file doesn't exist, skip that section.
+### Step 9: Cleanup
 
-Then: Cleanup worktree (Step 7)
+Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first.
 
-#### Option 3: Keep As-Is
+## Red Flags — STOP
 
-Report: "Keeping branch <name>. Worktree preserved at <path>."
-
-**Don't cleanup worktree.**
-
-#### Option 4: Discard
-
-**Confirm first:**
-```
-This will permanently delete:
-- Branch <name>
-- All commits: <commit-list>
-- Worktree at <path>
-
-Type 'discard' to confirm.
-```
-
-Wait for exact confirmation.
-
-If confirmed:
-```bash
-git checkout <base-branch>
-git branch -D <feature-branch>
-```
-
-Then: Cleanup worktree (Step 7)
-
-### Step 7: Cleanup Worktree
-
-**For Options 1, 2, 4:**
-
-Check if in worktree:
-```bash
-git worktree list | grep $(git branch --show-current)
-```
-
-If yes:
-```bash
-git worktree remove <worktree-path>
-```
-
-**For Option 3:** Keep worktree.
-
-## Quick Reference
-
-| Option | Merge | Push | PR Target | Keep Worktree | Cleanup Branch |
-|--------|-------|------|-----------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | - | ✓ |
-| 2. Create PR | - | ✓ | base-branch | ✓ | - |
-| 3. Keep as-is | - | - | - | ✓ | - |
-| 4. Discard | - | - | - | - | ✓ (force) |
-
-## Red Flags
-
-**Never:**
-- Hardcode `main` as PR target — always use the actual base branch
-- Proceed with failing tests
-- Merge without verifying tests on result
-- Delete work without confirmation
-- Force-push without explicit request
-
-**Always:**
-- Verify pre-merge-review was run before finishing
-- Read base branch from feature file or git history
-- Present exactly 4 options
-- Get typed confirmation for Option 4
-- Clean up worktree for Options 1 & 4 only
+| Thought | Reality |
+|---------|---------|
+| "Tests passed during execution" | Per-task ≠ full suite. Run `-g all`. |
+| "These failures are pre-existing" | Without baseline evidence? Hallucination. |
+| "E2E is slow, skip it" | E2E is mandatory. Full suite. |
+| "Only 1 .css changed, skip visual" | Any frontend file = visual verification. |
+| "Let me ask if visual is needed" | NEVER ask. Check diff. Act. |
+| "Baseline not found, assume clean" | WARN: all failures unverified. |
 
 ## Integration
 
-**Called by:**
-- **subagent-driven-development** — After all tasks + pre-merge-review complete
-- **executing-plans** — After all tasks + pre-merge-review complete
-
-**Pairs with:**
-- **using-git-worktrees** - Cleans up worktree created by that skill
-- **feature-context** - Reads base_branch, updates status to done
-- **visual-verification** - Screenshots of UI changes (Step 3)
+**Called by:** `subagent-driven-development`, `executing-plans` — after pre-merge-review
+**Requires:** `pre-merge-review` completed (Step 0), `feature-context` (Step 1)
+**Uses:** `visual-verification` (Step 3, automatic), `rr:workflow-monitor` (optional, E2E)
+**Reads:** `.ai/test-results/<branch>/baseline-failures.txt` from executor skills

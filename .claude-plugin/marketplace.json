@@ -8,7 +8,7 @@
     {
       "name": "rr",
       "description": "Rezavo workflow plugin with feature-context, pre-merge-review, audit, visual-verification, testing-guidelines, and development skills",
-      "version": "1.12.0",
+      "version": "1.13.0",
       "author": { "name": "Rezavo" },
       "source": "./plugins/rr",
       "category": "productivity"
@@ -16,7 +16,7 @@
     {
       "name": "rrz",
       "description": "Z.AI compatible fork of rr workflow plugin — no model params, works with any backend",
-      "version": "1.5.0",
+      "version": "1.6.0",
       "author": { "name": "Rezavo" },
       "source": "./plugins/rrz",
       "category": "productivity"

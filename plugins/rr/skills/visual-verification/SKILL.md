@@ -31,6 +31,8 @@ UI touchpoints for this feature:
 Docker is the ONLY way. Staging/dev servers run `main`, not your feature branch. Docker has your code via volume mounts + controlled seed data. No excuses — start it.
 </HARD-RULE>
 
+Check if Docker test containers are already running (`docker compose -f docker-compose.test.yml ps`). If healthy — skip startup. Otherwise:
+
 ```bash
 ./cli.py test up --no-build          # Fast (cached images)
 ./cli.py test up                     # Full rebuild
@@ -75,8 +77,9 @@ Docker is the ONLY way. Staging/dev servers run `main`, not your feature branch.
 ```bash
 git add .ai/screenshots/<branch-name>/
 git commit -m "docs: visual verification screenshots"
-./cli.py test down                   # Cleanup
 ```
+
+**Do NOT run `./cli.py test down`** — the caller (finishing-a-development-branch) manages Docker lifecycle. Docker stays up for subsequent test steps.
 
 PR body: add `## Screenshots` section with `![desc](.ai/screenshots/<branch-name>/file.png)`.
 

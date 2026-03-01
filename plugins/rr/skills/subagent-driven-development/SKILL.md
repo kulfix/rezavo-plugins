@@ -44,6 +44,28 @@ Before anything else:
 2. Read the feature file content — understand status, blocked_by, plans
 3. This step is NON-NEGOTIABLE — even after context restore
 
+### Step 1: Baseline Tests (MANDATORY)
+
+Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of what passes/fails before you touch code.
+
+```bash
+# Backend tests
+./cli.py test up --no-build
+mkdir -p .ai/test-results/<branch-name>
+./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
+./cli.py test down
+
+# E2E tests
+./cli.py e2e up
+./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
+./cli.py e2e down
+
+# Resume backend Docker for task execution
+./cli.py test up --no-build
+```
+
+Parse pytest/playwright summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
+
 ### Execution Flow
 
 ```dot
