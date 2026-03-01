@@ -7,10 +7,18 @@
   "plugins": [
     {
       "name": "rr",
-      "description": "Rezavo workflow overrides — extends superpowers with feature-context and audit",
-      "version": "1.0.0",
+      "description": "Rezavo workflow plugin with feature-context, pre-merge-review, audit, and development skills",
+      "version": "1.8.0",
       "author": { "name": "Rezavo" },
       "source": "./plugins/rr",
+      "category": "productivity"
+    },
+    {
+      "name": "rrz",
+      "description": "Z.AI compatible fork of rr workflow plugin — no model params, works with any backend",
+      "version": "1.1.0",
+      "author": { "name": "Rezavo" },
+      "source": "./plugins/rrz",
       "category": "productivity"
     }
   ]
