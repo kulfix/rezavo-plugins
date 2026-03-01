@@ -4,13 +4,93 @@ Plugin marketplace for Rezavo project.
 
 ## Plugins
 
-### rr
+### rr (v1.11.0)
 
-Workflow plugin extending superpowers with feature-context, audit gate, and development skills.
+Workflow engine: 19 skilli, 8 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
 
-### rrz
+### rrz (v1.4.0)
 
 Z.AI compatible fork of rr — no `model:` params, works with any backend.
+
+## Instalacja na nowej maszynie
+
+### 1. Zainstaluj marketplace
+
+```bash
+claude /plugin     # → Install → Git URL
+# URL: https://github.com/<org>/rezavo-plugins.git
+# Wybierz: rr
+```
+
+### 2. Zainstaluj wymagane pluginy official
+
+```bash
+claude /plugin     # → Install → Official → wybierz po kolei:
+```
+
+| Plugin | Cel | Wymagany? |
+|--------|-----|-----------|
+| `rr@rezavo-plugins` | Workflow engine | **TAK** |
+| `context7@claude-plugins-official` | Docs bibliotek (MCP) | TAK |
+| `playwright@claude-plugins-official` | Browser/E2E (MCP) | TAK |
+| `pyright-lsp@claude-plugins-official` | Python type check | TAK |
+| `plugin-dev@claude-plugins-official` | Rozwój rr pluginu | Opcjonalny |
+| `learning-output-style@claude-plugins-official` | Learning mode | Opcjonalny |
+| `claude-md-management@claude-plugins-official` | CLAUDE.md audit | Opcjonalny |
+
+### 3. Konfiguracja pluginów per projekt
+
+Pluginy włączamy w **project scope** (`.claude/settings.local.json`), NIE w user scope (`~/.claude/settings.json`).
+
+```jsonc
+// .claude/settings.local.json — sekcja enabledPlugins
+{
+  "enabledPlugins": {
+    "rr@rezavo-plugins": true,
+    "context7@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true
+  }
+}
+```
+
+**User scope (`~/.claude/settings.json`) powinien mieć pusty `enabledPlugins: {}`** — zapobiega duplikacji i konfliktom między projektami.
+
+### 4. Weryfikacja
+
+```bash
+claude
+# W sesji:
+/skills          # Powinny być widoczne rr:* skills
+/plugin          # Status zainstalowanych pluginów
+```
+
+### Pluginy do NIE instalowania
+
+Te pluginy duplikują to co rr robi lepiej:
+
+| Plugin | Dlaczego nie | Odpowiednik w rr |
+|--------|-------------|-------------------|
+| `superpowers` | rr jest forkiem superpowers | rr = superpowers + custom |
+| `code-review` | Generyczny review | rr:Fletcher |
+| `pr-review-toolkit` | 6 generycznych agentów | rr:Fletcher + Javert + Paranoik |
+| `code-simplifier` | Simplify agent | rr:Diogenes |
+| `feature-dev` | Generyczny workflow | rr:brainstorming + writing-plans + executing-plans |
+| `security-guidance` | PreToolUse hook | rr:Paranoik |
+
+### Różnice między środowiskami
+
+| Środowisko | Hostname | Pluginy | Uwagi |
+|------------|----------|---------|-------|
+| **PROD** (.210) | `pytek` | Brak Claude | TYLKO ODCZYT |
+| **STAGING** (.231) | `pytek-dev` | Jak DEV | Testy z userami |
+| **DEV-1** (.232) | `pytek-dev` | Pełny zestaw | Agenci |
+| **DEV-2** (.233) | `pytek-dev` | Pełny zestaw | Agenci |
+
+Konfiguracja pluginów jest identyczna na DEV-1 i DEV-2. `settings.local.json` jest w `.gitignore` — każda maszyna musi być skonfigurowana osobno.
 
 ## Editing plugins
 
