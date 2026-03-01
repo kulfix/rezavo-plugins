@@ -179,6 +179,80 @@ def test_should_handle_international_format(self, db): ...
 def test_should_handle_duplicate_phones(self, db): ...
 ```
 
+## E2E testy (Playwright)
+
+E2E dzialaja lokalnie w Docker (debug) i w GitHub Actions (CI).
+
+### Lokalne uruchamianie (Docker)
+
+```bash
+./cli.py e2e up                          # Start srodowiska E2E (raz)
+./cli.py e2e test smoke                  # Smoke — critical paths
+./cli.py e2e test booking                # Jedna grupa
+./cli.py e2e test smoke --debug          # Z Playwright inspector
+./cli.py e2e test smoke --headed         # Z UI przegladarki
+./cli.py e2e test smoke --browser=firefox
+./cli.py e2e down                        # Stop
+```
+
+### GitHub Actions (CI)
+
+```bash
+# Pojedynczy plik (~3-4 min zamiast ~15 min full)
+gh workflow run e2e-modular.yml -f groups=booking \
+  -f test_file=tests/e2e/features/booking-guest-tracking.spec.ts
+
+# Grupa
+gh workflow run e2e-modular.yml -f groups=smoke -f browsers=chromium
+
+# Full suite
+gh workflow run e2e-modular.yml -f groups=all
+```
+
+### Grupy E2E
+
+| Grupa | Opis | Czas |
+|-------|------|------|
+| `smoke` | Critical paths | ~3-5 min |
+| `booking` | Booking management | ~5 min |
+| `dashboard` | Dashboard & stats | ~5 min |
+| `all` | Wszystkie | ~15 min |
+
+### Kiedy odpalac E2E
+
+| Sytuacja | Komenda | Zakres |
+|----------|---------|--------|
+| Debug/fix konkretnego testu | `./cli.py e2e test <grupa>` lokalnie | Punktowo |
+| Po zmianie UI/frontendu | `./cli.py e2e test smoke` lokalnie | Smoke |
+| Przed PR | `gh workflow run e2e-modular.yml -f groups=all` | Full w CI |
+| Naprawianie E2E | `./cli.py e2e test <grupa>` lub `gh workflow run ... -f test_file=...` | Punktowo |
+
+**Ta sama zasada co unit testy:** punktowo podczas pracy, full na koniec.
+
+**NIE odpalaj calego workflow zeby sprawdzic 1 test!** Uzyj `test_file` w CI lub konkretna grupe lokalnie.
+
+### Credentials E2E
+
+| Username | Password | Rola |
+|----------|----------|------|
+| `e2e_admin` | `Test123456!@#` | admin |
+| `e2e_operator` | `Test123456!@#` | operator |
+| `e2e_viewer` | `Test123456!@#` | viewer |
+| `admin` | `Admin123456789!` | admin (visual tests) |
+
+Seed: `tests/fixtures/e2e-seed.sql`
+
+### Struktura E2E
+
+```
+tests/e2e/
+  smoke/       # Critical paths (~5 tests)
+  features/    # Feature-specific (~8 files)
+  user-stories/ # User stories (~10 tests)
+  visual/      # Visual regression
+  fixtures/    # auth.ts, test-data.ts, api-helpers.ts
+```
+
 ## Checklist
 
 - [ ] `pytestmark` w pliku
@@ -190,6 +264,7 @@ def test_should_handle_duplicate_phones(self, db): ...
 - [ ] Mockuje TYLKO external API
 - [ ] Edge cases pokryte
 - [ ] Uruchamiam przez `./cli.py test run` (nie `pytest`)
+- [ ] E2E przez `./cli.py e2e test` lub `gh workflow run` (nie `npx playwright` bezposrednio)
 
 ## Anti-Patterns
 
@@ -203,3 +278,5 @@ def test_should_handle_duplicate_phones(self, db): ...
 | Skip edge cases | Cover null, empty, max |
 | One giant test | Many small focused tests |
 | `User.role` (legacy) | `UserTenantFactory` (RBAC) |
+| `npx playwright test` bezposrednio | `./cli.py e2e test` w Docker |
+| `gh workflow run` full suite na 1 test | `test_file=` lub lokalna grupa |
