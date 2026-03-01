@@ -9,7 +9,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify pre-merge-review → Update feature file → Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify pre-merge-review → Update feature file → Verify tests → Visual verification → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -39,7 +39,21 @@ npm test / cargo test / pytest / go test ./...
 
 **If tests fail:** Stop. Fix before proceeding.
 
-### Step 3: Determine Base Branch
+### Step 3: Visual Verification (if UI changes)
+
+Check if feature touches any user-visible rendering (templates, HTML, frontend, CSS, landing pages).
+
+**If YES:** Run `rr:visual-verification` skill. This will:
+1. Identify UI touchpoints from feature file and changed files
+2. Take Playwright MCP screenshots of each touchpoint
+3. Verify screenshots visually
+4. Commit screenshots to `.ai/screenshots/<branch-name>/`
+
+**If NO (pure backend):** Skip — but verify decision. If changed files include `.html`, `.jsx`, `.tsx`, `.jinja`, `.liquid`, template strings, or CSS — it HAS UI changes.
+
+Screenshots will be included in PR body (Step 6, Option 2).
+
+### Step 4: Determine Base Branch
 
 Read `base_branch` from feature file frontmatter (`.ai/features/<name>.md`).
 
@@ -54,7 +68,7 @@ Or ask: "This branch appears to have split from `<branch>` - is that correct?"
 **Important:** The base branch is NOT always `main`. Feature branches can chain:
 `main → feature/A → feature/B`. In this case, feature/B's base is feature/A, not main.
 
-### Step 4: Present Options
+### Step 5: Present Options
 
 Present exactly these 4 options:
 
@@ -73,7 +87,7 @@ Which option?
 
 **Don't add explanation** - keep options concise.
 
-### Step 5: Execute Choice
+### Step 6: Execute Choice
 
 #### Option 1: Merge Locally
 
@@ -87,7 +101,7 @@ git merge <feature-branch>
 git branch -d <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 6)
+Then: Cleanup worktree (Step 7)
 
 #### Option 2: Push and Create PR
 
@@ -114,6 +128,14 @@ gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 ## What was built
 [From feature file: Co można zrobić — bullet points]
 
+## Screenshots
+[From .ai/screenshots/<branch-name>/ — if visual verification was done]
+
+### [Page/Feature Name]
+![Description](.ai/screenshots/<branch-name>/filename.png)
+
+[If no UI changes: replace with "No UI changes in this feature."]
+
 ## Quality Audit
 [From summary.md: totals + per-agent ratings]
 
@@ -127,14 +149,15 @@ gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 [From issues.md: table, or "None"]
 
 ## Test Plan
-- [ ] [verification steps]
+[EVERY checkbox MUST have evidence — screenshot reference, command output, or CI link]
+- [x] [claim] — [evidence: screenshot above / command output / CI link]
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
 If any source file doesn't exist, skip that section.
 
-Then: Cleanup worktree (Step 6)
+Then: Cleanup worktree (Step 7)
 
 #### Option 3: Keep As-Is
 
@@ -162,9 +185,9 @@ git checkout <base-branch>
 git branch -D <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 6)
+Then: Cleanup worktree (Step 7)
 
-### Step 6: Cleanup Worktree
+### Step 7: Cleanup Worktree
 
 **For Options 1, 2, 4:**
 
@@ -214,3 +237,4 @@ git worktree remove <worktree-path>
 **Pairs with:**
 - **using-git-worktrees** - Cleans up worktree created by that skill
 - **feature-context** - Reads base_branch, updates status to done
+- **visual-verification** - Screenshots of UI changes (Step 3)
