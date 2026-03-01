@@ -30,12 +30,9 @@ Use `feature-context` skill to update the feature file:
 
 ### Step 2: Verify Tests
 
-**Before presenting options, verify tests pass:**
+**Before presenting options, verify tests pass.**
 
-```bash
-# Run project's test suite
-npm test / cargo test / pytest / go test ./...
-```
+Use project's test command from CLAUDE.md (e.g. `./cli.py test run`). If E2E relevant, also run E2E (`./cli.py e2e test smoke`). See `rr:testing-guidelines` for details.
 
 **If tests fail:** Stop. Fix before proceeding.
 
