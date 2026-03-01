@@ -71,24 +71,29 @@ Focus ONLY on scoped files, not legacy code.
 2. Dispatch 6 Agent tool calls — ONE message, parallel
 3. Wait for all results
 4. Collect all findings from all agents
-5. Triage (main session / Opus): mark each finding as MUST FIX or FALSE POSITIVE (with reason)
-6. Create tasks from findings (see below)
-7. Show audit summary
+5. Triage (main session): mark each finding as MUST FIX, FALSE POSITIVE, or DEFERRED (with reason)
+6. Create tasks from MUST FIX findings (see below)
+7. Append DEFERRED findings to `.ai/audit/<branch-name>/issues.md`
+8. Show audit summary
 
 ## Finding Policy
 
 <HARD-RULE>
-Every finding = MUST FIX or FALSE POSITIVE. No other categories.
+Every finding = MUST FIX, FALSE POSITIVE, or DEFERRED. No other categories.
 
-BANNED excuses:
-- "pre-existing" — if it's in scope, fix it
-- "out of scope" — if agent found it in scoped files, it's in scope
-- "too hard" — break it into steps, but fix it
-- "nice to have" / "deferred" — does not exist, fix now or mark false positive
-- "suggestion" — there are no suggestions, only findings
+**MUST FIX** — real issue, fix now in this PR.
+**FALSE POSITIVE** — agent is wrong, the issue doesn't exist. Explain WHY.
+**DEFERRED** — real issue, but not fixable in this PR scope. Requires ALL of:
+  - Concrete reason why not now (pre-existing, architectural change, separate feature)
+  - Source agent + finding ID
+  - Proposed fix (what to do when you address it later)
 
-The ONLY valid reason to skip a finding is FALSE POSITIVE (agent is wrong about the issue).
-If you disagree with a finding, explain WHY it's a false positive, don't just skip it.
+DEFERRED restrictions:
+- Security, tenant isolation, data loss → **always MUST FIX**, never DEFERRED
+- "too hard" is NOT a valid reason for DEFERRED — break into steps
+- DEFERRED is NOT a trash bin — every deferred item must have a real proposed fix
+
+DEFERRED findings go to `.ai/audit/<branch-name>/issues.md` for tracking after merge.
 </HARD-RULE>
 
 ## Creating Tasks from Findings
@@ -109,6 +114,25 @@ TaskCreate:
 
 Group related findings into single tasks where it makes sense (e.g. 3 Fletcher findings in same file = 1 task).
 
+## Writing Deferred Issues
+
+For each DEFERRED finding, append a row to `.ai/audit/<branch-name>/issues.md`.
+
+Create the file if it doesn't exist. Format:
+
+```markdown
+# Issues: <branch-name>
+
+Deferred findings from pre-merge review — to verify after merge.
+
+| # | Round | Agent | Finding | File | Problem | Proposed fix | Status |
+|---|-------|-------|---------|------|---------|-------------|--------|
+```
+
+Each DEFERRED finding adds a row with status `open`.
+
+`<branch-name>` = current git branch name with `/` replaced by `-` (e.g. `feature/foo` → `feature-foo`).
+
 ## Output
 
 ### Audit Summary
@@ -127,10 +151,13 @@ Dr. House: [HEALTHY/SYMPTOMATIC/TERMINAL]     — X findings
 DBA:       [SAFE/RISKY/DANGEROUS]             — X findings
 Diogenes:  [CLEAN/SIMPLIFIED/COMPLEX]         — X findings
 
-Total: X findings → Y tasks created, Z false positives
+Total: X findings → Y tasks created, Z false positives, W deferred
 
 False positives (if any):
 - [agent]: [finding] — REASON why false positive
+
+Deferred (if any):
+- [agent]: [finding] — REASON why deferred + proposed fix
 ```
 
 ### Feature Summary
@@ -167,7 +194,7 @@ Recommend running `/audit` again after fixing all tasks to verify no regressions
 |---------|-----|
 | No feature file exists | Create with **rr:feature-context** first |
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |
-| Skipping findings as "pre-existing" | BANNED — fix it or mark false positive with reason |
+| Skipping findings as "pre-existing" | Use DEFERRED with proposed fix, not FALSE POSITIVE |
 | Diogenes editing files directly | Diogenes produces REPORT only |
 | Running on wrong branch | Verify branch matches feature file `branch:` field |
 | Fixing inside audit | Audit ONLY reports and creates tasks. Fixing is separate. |

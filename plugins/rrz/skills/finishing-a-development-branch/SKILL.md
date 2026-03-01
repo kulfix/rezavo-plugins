@@ -18,7 +18,7 @@ Guide completion of development work by presenting clear options and handling ch
 ### Step 0: Verify Gate Was Run (REQUIRED)
 
 Before finishing:
-1. Check if `/pre-merge-review` was run in this session or on this branch (look for `.ai/audit/round-*.md` reports)
+1. Check if `/pre-merge-review` was run on this branch (look for `.ai/audit/<branch-name>/summary.md`)
 2. If NOT run — **STOP. Run `/pre-merge-review` first.** Do not proceed without it.
 3. Gate must have been approved by user before proceeding
 
@@ -96,17 +96,43 @@ Then: Cleanup worktree (Step 6)
 git push -u origin <feature-branch>
 
 # Create PR targeting base branch (NOT always main!)
-gh pr create --base <base-branch> --title "<title>" --body "$(cat <<'EOF'
-## Summary
-<2-3 bullets of what changed>
-
-## Test Plan
-- [ ] <verification steps>
-EOF
-)"
+gh pr create --base <base-branch> --title "<title>" --body "<PR body>"
 ```
 
 **Critical:** `--base <base-branch>` must be the actual base, not hardcoded `main`.
+
+**PR body** — generate from available sources:
+
+1. **Feature file** (`.ai/features/<name>.md`) → Summary + What was built
+2. **Audit summary** (`.ai/audit/<branch-name>/summary.md`) → Quality Audit
+3. **Issues** (`.ai/audit/<branch-name>/issues.md`) → Deferred Issues
+
+```markdown
+## Summary
+[From feature file: Co to jest — 2-3 sentences]
+
+## What was built
+[From feature file: Co można zrobić — bullet points]
+
+## Quality Audit
+[From summary.md: totals + per-agent ratings]
+
+| Category | Count |
+|----------|-------|
+| Fixed | X |
+| False positive | Y |
+| Deferred | Z |
+
+## Deferred Issues
+[From issues.md: table, or "None"]
+
+## Test Plan
+- [ ] [verification steps]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+If any source file doesn't exist, skip that section.
 
 Then: Cleanup worktree (Step 6)
 

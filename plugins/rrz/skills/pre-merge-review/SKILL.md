@@ -1,14 +1,13 @@
 ---
 name: pre-merge-review
 description: >
-  Use as the final quality step before merge or PR creation.
-  Runs 3 audit rounds with fixes between them, produces reports,
-  and presents final summary for user approval.
+  Use as the final quality step before PR creation.
+  Runs 3 audit rounds with fixes between them, produces reports and summary.
 ---
 
 # Pre-Merge Review
 
-3-round audit cycle: audit → fix → report × 3, then summary for user approval.
+3-round audit cycle: audit → fix → report × 3, then summary.
 
 ## Overview
 
@@ -18,7 +17,9 @@ Orchestrate 3 rounds of `/audit` + fix. Each round:
 3. Commit fixes
 4. Save audit report to file
 
-After 3 rounds: present final summary. Wait for user approval. Then proceed to PR.
+After 3 rounds: generate summary + present to user. Done.
+
+Pre-merge-review does NOT create PRs — that's the caller's responsibility (executing-plans or user).
 
 ## Invocation
 
@@ -30,36 +31,56 @@ After 3 rounds: present final summary. Wait for user approval. Then proceed to P
 
 Pass arguments through to `rrz:audit`.
 
+## Directory Structure
+
+All reports go in `.ai/audit/<branch-name>/` (branch `/` → `-`):
+
+```
+.ai/audit/<branch-name>/
+├── round-1.md
+├── round-2.md
+├── round-3.md
+├── summary.md      ← generated after 3 rounds
+└── issues.md        ← deferred findings (created by audit skill)
+```
+
+Clean up the branch directory before starting (if re-run). Preserve other branches.
+
 ## Execution
+
+### Setup
+
+1. Determine `<branch-name>` from current git branch (replace `/` with `-`)
+2. Create `.ai/audit/<branch-name>/` directory
+3. Clean up old reports in that directory (if re-run)
 
 ### Round 1
 
 1. Invoke `rrz:audit` skill (pass scope arguments through)
-2. Audit creates tasks from findings
+2. Audit creates tasks from MUST FIX findings, writes DEFERRED to issues.md
 3. Execute all tasks as subagents (one Agent per task)
 4. Commit: `fix: audit round 1 — [summary of fixes]`
-5. Save report: `.ai/audit/round-1.md`
+5. Save report: `.ai/audit/<branch-name>/round-1.md`
 
 ### Round 2
 
 1. Invoke `rrz:audit` again (same scope)
 2. New findings = new tasks
-3. Execute all tasks as **subagents**
+3. Execute all tasks as subagents
 4. Commit: `fix: audit round 2 — [summary of fixes]`
-5. Save report: `.ai/audit/round-2.md`
+5. Save report: `.ai/audit/<branch-name>/round-2.md`
 6. In report, note which findings are NEW vs REMAINING from round 1
 
 ### Round 3
 
 1. Invoke `rrz:audit` again (same scope)
 2. If clean → note "clean pass" in report
-3. If findings remain → fix them as **subagents**, commit: `fix: audit round 3 — final cleanup`
-4. Save report: `.ai/audit/round-3.md`
+3. If findings remain → fix them as subagents, commit: `fix: audit round 3 — final cleanup`
+4. Save report: `.ai/audit/<branch-name>/round-3.md`
 
 ### Fixing Tasks — Subagents
 
 Dispatch each fix task as a `general-purpose` Agent.
-Fixers handle routine corrections autonomously.
 
 ```
 Agent tool call per task:
@@ -88,6 +109,7 @@ Each `round-N.md`:
 | 1 | Fletcher | Critical | app/foo.py:42 | N+1 query | FIXED |
 | 2 | Paranoik | Important | app/bar.py:10 | Missing tenant check | FIXED |
 | 3 | Dr. House | Minor | tests/test_foo.py:5 | Weak assertion | FALSE POSITIVE — [reason] |
+| 4 | Fletcher | Important | app/bar.py:20 | Hardcoded URL | DEFERRED — pre-existing, extract to settings |
 
 ## Per-Agent Summary
 
@@ -100,77 +122,95 @@ Diogenes:  [CLEAN/SIMPLIFIED/COMPLEX] — X findings
 
 ## Result
 
-X findings total: Y fixed, Z false positives
+X findings total: Y fixed, Z false positives, W deferred
 ```
 
-### Final Summary
+### Generate Summary
 
-After all 3 rounds, present to user:
+After all 3 rounds, generate `.ai/audit/<branch-name>/summary.md`:
 
-```
-PRE-MERGE REVIEW SUMMARY
-═════════════════════════
-Feature: [name]
-Branch: [branch]
+```markdown
+# Pre-Merge Review Summary
 
-WHAT WAS BUILT
-──────────────
-- [bullet points: what the feature does]
-- [key architectural decisions]
-- [key files created/modified]
-- [how it works — brief flow]
+**Feature:** [name]
+**Branch:** [branch]
+**Date:** YYYY-MM-DD
 
-3-ROUND AUDIT
-─────────────
-Round 1: X findings → Y fixed, Z false positive
-Round 2: X findings → Y fixed, Z false positive
-Round 3: X findings (should be 0)
+## Round 1
+X findings: Y fixed, Z false positive, W deferred
 
-PER-AGENT ACROSS ALL ROUNDS
-────────────────────────────
+| # | Agent | Severity | File | Problem | Status |
+|---|-------|----------|------|---------|--------|
+| ... full table from round-1.md ... |
+
+## Round 2
+[same format]
+
+## Round 3
+[same format]
+
+## Totals
+
+| Category | Count |
+|----------|-------|
+| Fixed | X |
+| False positive | Y |
+| Deferred | Z |
+| **Total findings** | **N** |
+
+## Deferred Issues
+
+→ See `issues.md` in this directory (X items)
+
+## Per-Agent Final Rating
+
 Fletcher:  [final rating] — X total findings
 Javert:    [final rating] — X/Y requirements met
 Paranoik:  [final rating] — X total findings
 Dr. House: [final rating] — X total findings
 DBA:       [final rating] — X total findings
 Diogenes:  [final rating] — X total findings
+```
+
+### Present to User
+
+After generating summary, show the user:
+
+```
+PRE-MERGE REVIEW COMPLETE
+═════════════════════════
+Feature: [name]
+Branch: [branch]
+
+3-ROUND AUDIT
+─────────────
+Round 1: X findings → Y fixed, Z false positive, W deferred
+Round 2: X findings → Y fixed, Z false positive, W deferred
+Round 3: X findings (should be 0)
+
+TOTALS: X fixed, Y false positive, Z deferred
+
+DEFERRED ISSUES (Z items)
+─────────────────────────
+[list from issues.md, or "None"]
 
 REPORTS
 ───────
-- .ai/audit/round-1.md
-- .ai/audit/round-2.md
-- .ai/audit/round-3.md
+.ai/audit/<branch-name>/summary.md
+.ai/audit/<branch-name>/issues.md
 ```
 
-Then ask user: **"Pre-merge review complete. Approve for PR?"**
-
-- **Yes** → invoke `rrz:finishing-a-development-branch`
-- **No** → user gives feedback, address it, re-run or fix specific issues
-
-## Directory Structure
-
-Reports go in `.ai/audit/` relative to project root:
-
-```
-.ai/
-├── features/
-│   └── my-feature.md
-└── audit/
-    ├── round-1.md
-    ├── round-2.md
-    └── round-3.md
-```
-
-Clean up old audit reports before starting (from previous runs on same branch).
+Do NOT ask "Approve for PR?" — the caller decides what to do next.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
 | Skipping rounds | ALWAYS run 3 rounds — fixes may introduce new issues |
-| Not saving reports | Every round MUST produce a `.ai/audit/round-N.md` file |
-| Proceeding without approval | ALWAYS wait for user to approve before PR |
+| Not saving reports | Every round MUST produce a report file |
+| Reports in wrong directory | Use `.ai/audit/<branch-name>/`, not `.ai/audit/` |
+| Asking for PR approval | Pre-merge-review does NOT create PRs, just reports |
 | Fixing inside audit | Audit reports. Pre-merge-review orchestrates fixing between audits. |
 | Not committing between rounds | Each round's fixes get their own commit |
 
-**USES:** rrz:audit, rrz:finishing-a-development-branch
+**USES:** rrz:audit

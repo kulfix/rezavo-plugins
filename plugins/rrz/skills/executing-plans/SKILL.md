@@ -28,10 +28,10 @@ Before anything else:
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute ALL Tasks via Subagents
+### Step 2: Execute ALL Tasks via Sonnet Subagents
 
-Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
-The plan is already written — subagents implement, orchestrator manages.
+Dispatch each task as a **subagent** (``, `subagent_type: "general-purpose"`).
+The plan is already written — Sonnet implements, Opus orchestrates.
 
 For each task:
 1. Mark as in_progress
@@ -39,6 +39,7 @@ For each task:
    ```
    Agent tool call:
      subagent_type: general-purpose
+     
      prompt: |
        Task: [task subject]
        [full task description from plan]
@@ -56,15 +57,48 @@ For each task:
 
 **Only stop if blocked** — see "When to Stop" below.
 
-### Step 3: Update Feature File & Gate (REQUIRED)
+### Step 3: Update Feature File, Audit & PR (REQUIRED)
 
 After ALL tasks complete and verified:
-1. Update feature file status (use `feature-context` skill)
-2. **RUN `/pre-merge-review`** — this runs 3 audit rounds (6 auditors each), fixes between rounds, saves reports
-3. Gate presents final summary and asks for user approval
-4. After approval → `rrz:finishing-a-development-branch`
+1. Update feature file status to `done` (use `feature-context` skill — business docs format)
+2. **RUN `/pre-merge-review`** — 3 audit rounds (6 auditors each), fixes between rounds, saves reports + summary + issues
+3. Push branch and create PR (target: `base_branch` from feature file)
 
-**DO NOT proceed to finishing-a-development-branch without completing /pre-merge-review.**
+**PR body** is generated from 3 sources:
+
+1. **Feature file** (`.ai/features/<name>.md`) → Summary + What was built
+2. **Audit summary** (`.ai/audit/<branch>/summary.md`) → Quality Audit section
+3. **Issues** (`.ai/audit/<branch>/issues.md`) → Deferred Issues section
+
+```bash
+gh pr create --base <base-branch> --title "<feature name>" --body "$(cat <<'EOF'
+## Summary
+[From feature file: Co to jest — 2-3 sentences]
+
+## What was built
+[From feature file: Co można zrobić — bullet points]
+
+## Quality Audit
+[From summary.md: totals + per-agent ratings]
+
+| Category | Count |
+|----------|-------|
+| Fixed | X |
+| False positive | Y |
+| Deferred | Z |
+
+## Deferred Issues
+[From issues.md: table, or "None"]
+
+## Test Plan
+- [ ] [verification steps from plan]
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+If any source file doesn't exist, skip that section (don't crash).
 
 ## When to Stop and Ask for Help
 
@@ -89,7 +123,7 @@ Do NOT stop for:
 - Don't skip verifications
 - Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: update feature file → /pre-merge-review
+- After last task: update feature file → /pre-merge-review → PR
 
 ## Integration
 
@@ -98,4 +132,4 @@ Do NOT stop for:
 - **pre-merge-review** - REQUIRED: Run after last task, 3 audit rounds (incl. Diogenes) + fixes + approval
 - **rrz:using-git-worktrees** - Set up isolated workspace before starting
 - **rrz:writing-plans** - Creates the plan this skill executes
-- **rrz:finishing-a-development-branch** - Complete development after pre-merge-review passes
+- **rrz:finishing-a-development-branch** - For manual use (standalone branch completion with 4 options)
