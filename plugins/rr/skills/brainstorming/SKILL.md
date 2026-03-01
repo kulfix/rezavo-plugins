@@ -27,9 +27,10 @@ You MUST create a task for each of these items and complete them in order:
 2. **Explore project context** — check files, docs, recent commits
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
-7. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+5. **Present full design overview** — complete picture with every element rated 1-10 (confidence/clarity), user must see and approve the whole before details
+6. **Refine weak elements** — anything rated below 7 gets discussed until raised or consciously accepted
+7. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
+8. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
@@ -39,19 +40,24 @@ digraph brainstorming {
     "Explore project context" [shape=box];
     "Ask clarifying questions" [shape=box];
     "Propose 2-3 approaches" [shape=box];
-    "Present design sections" [shape=box];
-    "User approves design?" [shape=diamond];
-    "Create feature branch from current" [shape=box style=filled fillcolor=lightyellow];
+    "Present full design overview\n(each element rated 1-10)" [shape=box style=filled fillcolor=lightyellow];
+    "All elements >= 7?" [shape=diamond];
+    "Refine weak elements" [shape=box];
+    "User approves full design?" [shape=diamond];
+    "Create feature branch from current" [shape=box];
     "Write design doc + feature file" [shape=box];
     "Invoke writing-plans skill" [shape=doublecircle];
 
     "Load feature context" -> "Explore project context";
     "Explore project context" -> "Ask clarifying questions";
     "Ask clarifying questions" -> "Propose 2-3 approaches";
-    "Propose 2-3 approaches" -> "Present design sections";
-    "Present design sections" -> "User approves design?";
-    "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Create feature branch from current" [label="yes"];
+    "Propose 2-3 approaches" -> "Present full design overview\n(each element rated 1-10)";
+    "Present full design overview\n(each element rated 1-10)" -> "All elements >= 7?";
+    "All elements >= 7?" -> "User approves full design?" [label="yes"];
+    "All elements >= 7?" -> "Refine weak elements" [label="no"];
+    "Refine weak elements" -> "Present full design overview\n(each element rated 1-10)";
+    "User approves full design?" -> "Present full design overview\n(each element rated 1-10)" [label="no, revise"];
+    "User approves full design?" -> "Create feature branch from current" [label="yes"];
     "Create feature branch from current" -> "Write design doc + feature file";
     "Write design doc + feature file" -> "Invoke writing-plans skill";
 }
@@ -66,7 +72,7 @@ Before starting brainstorming:
 2. If feature file exists — read it, understand status and dependencies
 3. If no feature file — you'll create one in step 6
 
-## Branch Creation (Step 6)
+## Branch Creation (Step 7)
 
 After design is approved, before writing docs:
 
@@ -96,12 +102,28 @@ Then write design doc + feature file on the new branch and commit.
 - Present options conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
 
-**Presenting the design:**
-- Once you believe you understand what you're building, present the design
-- Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
-- Ask after each section whether it looks right so far
-- Cover: architecture, components, data flow, error handling, testing
-- Be ready to go back and clarify if something doesn't make sense
+**Presenting the full design overview:**
+- Once approach is chosen, present the COMPLETE design as one cohesive document
+- Every element gets a confidence rating 1-10:
+
+```
+DESIGN OVERVIEW
+═══════════════
+
+| # | Element | Description | Rating | Notes |
+|---|---------|-------------|:------:|-------|
+| 1 | Architecture | Driver pattern for booking panels | 9/10 | Well understood |
+| 2 | Data model | New kwhotel_room_group_id on RoomType | 8/10 | Simple addition |
+| 3 | Migration strategy | Seed Settings per tenant | 6/10 | Need to clarify rollback |
+| 4 | Error handling | Pre-send validation | 7/10 | Edge cases TBD |
+| 5 | Testing approach | Unit + integration, no E2E | 5/10 | Missing visual verification |
+```
+
+- **Rating meaning:** 1 = no idea how, 5 = rough sketch, 7 = solid plan, 10 = trivial/proven
+- **Anything below 7** must be discussed and either raised or consciously accepted with rationale
+- User sees the full picture BEFORE approving — no section-by-section drip
+- After user reviews ratings, refine weak elements together
+- Re-present updated overview until user approves the whole
 
 ## Key Principles
 
