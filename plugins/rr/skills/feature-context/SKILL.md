@@ -87,24 +87,7 @@ Dokumentuj CO można zrobić, JAK tego używać, DLACZEGO takie decyzje.
 | **Writing plans** | Add plan path to `plans:` |
 | **Executing plans** (after each task) | Update `files:`, "Co zrobione", "TODO", set `status: in_progress` |
 | **Bug found** | Add to "Known issues" |
-| **Finishing branch** | See HARD-RULE below |
-
-<HARD-RULE>
-**Finishing branch — business documentation is MANDATORY:**
-
-1. Set `status: done`
-2. DELETE dev sections: Co zrobione, TODO, Known issues, Założenia
-3. WRITE business sections — ALL of them:
-   - **Co to jest** — 1-2 zdania, perspektywa użytkownika
-   - **Po co to** — problem biznesowy, dlaczego teraz
-   - **Co można zrobić** — lista możliwości z perspektywy usera, NIE kod
-   - **Jak używać** — krok po kroku per grupa użytkowników
-   - **Decyzje** — tabela kluczowych wyborów
-   - **Nie w scope** — co pominięto i dlaczego
-
-PR body is generated FROM these sections. Without them → PR will be technical garbage.
-This step must happen BEFORE /pre-merge-review and BEFORE PR creation.
-</HARD-RULE>
+| **Finishing branch** | Set `status: done`. Delete dev sections (Co zrobione/TODO/Known issues/Założenia). Write ALL business sections from the template above (Co to jest → Nie w scope). PR body is generated from these sections. |
 
 ## Updating `files:`
 
@@ -126,7 +109,7 @@ git diff HEAD~1 --name-only
 | Adding every touched file | Only files central to feature |
 | No feature file before executing plans | Create during brainstorming or manually |
 | Missing `plans:` link | rr:audit (Javert) can't verify completeness |
-| Setting status: done without business docs | MUST write Co to jest/Po co to/Co można zrobić before PR |
-| Writing technical descriptions | Feature file = business perspective, NOT code architecture |
+| Setting status: done without business sections | Write all 6 business sections (Co to jest → Nie w scope) when finishing |
+| Describing implementation instead of capabilities | Write what user can DO, not how code works |
 
 **REQUIRED BY:** rr:audit, rr:brainstorming, rr:writing-plans, rr:executing-plans, rr:finishing-a-development-branch
