@@ -50,18 +50,17 @@ Parse pytest/playwright summaries. Extract failed test names to `baseline-failur
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 3: Execute ALL Tasks via Sonnet Subagents
+### Step 3: Execute ALL Tasks via Subagents
 
-Dispatch each task as a **Sonnet subagent** (`model: "sonnet"`, `subagent_type: "general-purpose"`).
-The plan is already written — Sonnet implements, Opus orchestrates.
+Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
+The plan is already written — subagent implements, you orchestrate.
 
 For each task:
 1. Mark as in_progress
-2. Dispatch as Sonnet subagent with full task context:
+2. Dispatch as subagent with full task context:
    ```
    Agent tool call:
      subagent_type: general-purpose
-     model: sonnet
      prompt: |
        Task: [task subject]
        [full task description from plan]
@@ -74,7 +73,7 @@ For each task:
 5. Update feature file `files:` with changed files
 6. Move to next task immediately
 
-**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple Sonnet subagents in parallel.
+**Parallel dispatch:** If tasks are independent (no shared state), dispatch multiple subagents in parallel.
 **Sequential tasks:** If task N depends on task N-1, wait for completion before dispatching.
 
 **Only stop if blocked** — see "When to Stop" below.
@@ -89,7 +88,7 @@ After ALL tasks complete and verified:
 
 ### Step 5: Audit & PR (REQUIRED)
 
-1. **RUN `/pre-merge-review`** — 3 audit rounds, fixes between rounds, saves reports + summary + issues
+1. **RUN `/pre-merge-review`** — 2 audit rounds (R2 conditional), fixes between rounds, saves reports + summary + issues
 2. Push branch and create PR (target: `base_branch` from feature file)
 
 **PR body** — generated from 3 sources:
@@ -161,7 +160,7 @@ Do NOT stop for:
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start, update per task, update at end
-- **pre-merge-review** - REQUIRED: Run after last task, 3 audit rounds (incl. Diogenes) + fixes + approval
+- **pre-merge-review** - REQUIRED: Run after last task, 2 audit rounds (R2 conditional) + fixes + approval
 - **rrz:using-git-worktrees** - Set up isolated workspace before starting
 - **rrz:writing-plans** - Creates the plan this skill executes
 - **rrz:finishing-a-development-branch** - For manual use (standalone branch completion with 4 options)

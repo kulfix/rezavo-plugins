@@ -5,9 +5,9 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh **Sonnet subagent** per task. Reviews happen at the end (audit + PR), not after each task.
+Execute plan by dispatching fresh subagent per task. Reviews happen at the end (audit + PR), not after each task.
 
-**Core principle:** Fresh Sonnet subagent per task + self-review = fast iteration. Opus orchestrates, Sonnet implements.
+**Core principle:** Fresh subagent per task + self-review = fast iteration. You orchestrate, subagent implements.
 
 ## When to Use
 
@@ -85,7 +85,7 @@ digraph process {
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
-    "Run /pre-merge-review (3 audit rounds + fixes + approval)" [shape=box style=filled fillcolor=lightyellow];
+    "Run /pre-merge-review (2 audit rounds + fixes + approval)" [shape=box style=filled fillcolor=lightyellow];
     "Use rr:finishing-a-development-branch → PR" [shape=box style=filled fillcolor=lightgreen];
 
     "Load feature context (Step 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
@@ -97,8 +97,8 @@ digraph process {
     "Implementer implements, tests, commits, self-reviews" -> "Mark task complete, update feature file files:";
     "Mark task complete, update feature file files:" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Run /pre-merge-review (3 audit rounds + fixes + approval)" [label="no"];
-    "Run /pre-merge-review (3 audit rounds + fixes + approval)" -> "Use rr:finishing-a-development-branch → PR";
+    "More tasks remain?" -> "Run /pre-merge-review (2 audit rounds + fixes + approval)" [label="no"];
+    "Run /pre-merge-review (2 audit rounds + fixes + approval)" -> "Use rr:finishing-a-development-branch → PR";
 }
 ```
 
@@ -140,7 +140,7 @@ Implementer:
 ... (continue for all tasks)
 
 [After all tasks]
-[Run /pre-merge-review — 3 audit rounds with fixes + approval]
+[Run /pre-merge-review — 2 audit rounds with fixes + approval]
 [Use rr:finishing-a-development-branch → PR]
 
 Done!
@@ -168,7 +168,7 @@ Done!
 
 **Quality pre-merge-reviews (at the end):**
 - Self-review per task catches obvious issues during implementation
-- `/pre-merge-review` runs 3 audit rounds (6 auditors incl. Diogenes for simplification), fixes between rounds, requires user approval
+- `/pre-merge-review` runs 2 audit rounds (3 auditors, R2 conditional), fixes between rounds, requires user approval
 - PR creation provides final integration checkpoint
 
 ## Red Flags
@@ -203,7 +203,7 @@ After each task is marked complete, update the feature file `files:` field with 
 
 **Required workflow skills:**
 - **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
-- **pre-merge-review** - REQUIRED: Run after last task, 3 audit rounds (incl. Diogenes for simplification) + fixes + approval
+- **pre-merge-review** - REQUIRED: Run after last task, 2 audit rounds (R2 conditional) + fixes + approval
 - **rr:finishing-a-development-branch** - Complete development after pre-merge-review → PR
 
 **Subagents should use:**

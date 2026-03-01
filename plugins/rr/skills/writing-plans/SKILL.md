@@ -58,11 +58,11 @@ Before writing any plan:
 ```markdown
 ### Task N: Gate
 
-Run `/pre-merge-review` skill. This runs 3 audit rounds with fixes between them:
-Round 1-3: 6 auditors (Fletcher, Javert, Paranoik, Dr. House, DBA, Diogenes)
+Run `/pre-merge-review` skill. This runs 2 audit rounds with fixes between them:
+Round 1-2: 3 auditors (Fletcher, Paranoik, Javert). R2 conditional.
 → fix findings → commit → re-audit.
 
-Reports saved to `.ai/audit/round-{1,2,3}.md`.
+Reports saved to `.ai/audit/round-{1,2}.md`.
 Final summary + user approval before PR.
 ```
 
