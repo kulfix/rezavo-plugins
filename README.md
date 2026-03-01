@@ -83,14 +83,16 @@ Te pluginy duplikują to co rr robi lepiej:
 
 ### Różnice między środowiskami
 
-| Środowisko | Hostname | Pluginy | Uwagi |
-|------------|----------|---------|-------|
-| **PROD** (.210) | `pytek` | Brak Claude | TYLKO ODCZYT |
-| **STAGING** (.231) | `pytek-dev` | Jak DEV | Testy z userami |
-| **DEV-1** (.232) | `pytek-dev` | Pełny zestaw | Agenci |
-| **DEV-2** (.233) | `pytek-dev` | Pełny zestaw | Agenci |
+| Środowisko | Hostname | IP | Pluginy | Uwagi |
+|------------|----------|----|---------|-------|
+| **PROD** (.210) | `pytek` | .210 | Pełny zestaw | **TYLKO ODCZYT** bez zgody usera — rr respektuje CLAUDE.md |
+| **STAGING** (.231) | `pytek-dev` | .231 | Pełny zestaw | Testy z userami, sync z PROD |
+| **DEV-1** (.232) | `pytek-dev` | .232 | Pełny zestaw | Pełny dostęp (agenci) |
+| **DEV-2** (.233) | `pytek-dev` | .233 | Pełny zestaw | Pełny dostęp (agenci) |
 
-Konfiguracja pluginów jest identyczna na DEV-1 i DEV-2. `settings.local.json` jest w `.gitignore` — każda maszyna musi być skonfigurowana osobno.
+Wszystkie środowiska mają Claude Code z identyczną konfiguracją pluginów. Na PROD ograniczenia wynikają z CLAUDE.md (zakaz modyfikacji DB, restartów, zmian konfiguracji bez zgody), nie z pluginów.
+
+`settings.local.json` jest w `.gitignore` — każda maszyna musi być skonfigurowana osobno.
 
 ## Editing plugins
 
