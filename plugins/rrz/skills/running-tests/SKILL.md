@@ -57,3 +57,8 @@ Jesli testy failuja:
 2. Sprawdz czy Docker dziala: `./cli.py test up`
 3. Sprawdz czy migracje sa aktualne w Docker
 4. NIE twierdz "pre-existing" bez baseline evidence
+
+<HARD-RULE>
+Przy debugowaniu ZAWSZE strzelaj w konkretne testy (`-k "test_name"` lub `-f tests/path/`).
+Full suite to ~3000 testow i >10 minut. Nie odpalaj go zeby sprawdzic 1 fix.
+</HARD-RULE>
