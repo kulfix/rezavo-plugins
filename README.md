@@ -94,6 +94,28 @@ Wszystkie środowiska mają Claude Code z identyczną konfiguracją pluginów. N
 
 `settings.local.json` jest w `.gitignore` — każda maszyna musi być skonfigurowana osobno.
 
+### 5. Posprzątaj stare custom commands
+
+Projekt miał legacy komendy w `.claude/commands/` sprzed rr. Zostały usunięte — rr je zastępuje:
+
+| Usunięta komenda | Odpowiednik w rr |
+|------------------|------------------|
+| `/fix` | `rr:systematic-debugging` + `rr:test-driven-development` |
+| `/security-audit` | `rr:audit` (6 agentów: Fletcher, Javert, Paranoik, Dr. House, DBA, Diogenes) |
+| `/verify` | `rr:audit` + `rr:pre-merge-review` |
+
+Jedyna pozostała komenda projektowa: `/update-pytek-plugin` (porównanie rr z upstream superpowers).
+
+Jeśli na maszynie nadal są stare komendy:
+
+```bash
+# Sprawdź
+ls .claude/commands/
+# Powinien być TYLKO: update-pytek-plugin.md
+# Jeśli są fix.md, security-audit.md, verify.md — usuń:
+rm .claude/commands/fix.md .claude/commands/security-audit.md .claude/commands/verify.md
+```
+
 ## Editing plugins
 
 ### Checklist
