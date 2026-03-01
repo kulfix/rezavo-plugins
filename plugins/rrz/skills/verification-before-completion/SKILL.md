@@ -48,6 +48,7 @@ Skip any step = lying, not verifying
 | Regression test works | Red-green cycle verified | Test passes once |
 | Agent completed | VCS diff shows changes | Agent reports "success" |
 | Requirements met | Line-by-line checklist | Tests passing |
+| UI works correctly | Playwright screenshot of each touchpoint | "It should look right", unit tests |
 
 ## Red Flags - STOP
 
