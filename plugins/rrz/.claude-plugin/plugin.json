@@ -1,7 +1,7 @@
 {
   "name": "rrz",
-  "version": "0.1.0",
-  "description": "Z.AI GLM dispatch layer for rr workflow — routes subagents through GLM-5 via claude -p",
+  "version": "1.0.0",
+  "description": "Z.AI compatible fork of rr workflow plugin — no model params, works with any backend",
   "author": {
     "name": "Rezavo"
   }

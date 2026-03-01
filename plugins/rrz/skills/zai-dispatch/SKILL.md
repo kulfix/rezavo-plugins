@@ -38,10 +38,10 @@ This skill OVERRIDES the dispatch mechanism in these rr skills when `ZAI_API_KEY
 
 | rr skill | What changes |
 |----------|-------------|
-| **rr:audit** | 6 auditors dispatched via zai-dispatch.sh instead of Agent tool |
-| **rr:pre-merge-review** | Fix tasks dispatched via zai-dispatch.sh |
-| **rr:executing-plans** | Implementation tasks via zai-dispatch.sh |
-| **rr:subagent-driven-development** | Implementer subagents via zai-dispatch.sh |
+| **rrz:audit** | 6 auditors dispatched via zai-dispatch.sh instead of Agent tool |
+| **rrz:pre-merge-review** | Fix tasks dispatched via zai-dispatch.sh |
+| **rrz:executing-plans** | Implementation tasks via zai-dispatch.sh |
+| **rrz:subagent-driven-development** | Implementer subagents via zai-dispatch.sh |
 
 ## Dispatch Patterns
 
