@@ -195,6 +195,7 @@ Recommend running `/audit` again after fixing all tasks to verify no regressions
 | No feature file exists | Create with **rr:feature-context** first |
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |
 | Skipping findings as "pre-existing" | Use DEFERRED with proposed fix, not FALSE POSITIVE |
+| Inventing triage categories | ONLY 3 exist: MUST FIX, FALSE POSITIVE, DEFERRED. No "accepted", "duplicate", "low-risk", "suggestion", "nice-to-have" |
 | Diogenes editing files directly | Diogenes produces REPORT only |
 | Running on wrong branch | Verify branch matches feature file `branch:` field |
 | Fixing inside audit | Audit ONLY reports and creates tasks. Fixing is separate. |

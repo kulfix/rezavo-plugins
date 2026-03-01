@@ -28,10 +28,10 @@ Before anything else:
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute ALL Tasks via Sonnet Subagents
+### Step 2: Execute ALL Tasks via Subagents
 
-Dispatch each task as a **subagent** (``, `subagent_type: "general-purpose"`).
-The plan is already written — Sonnet implements, Opus orchestrates.
+Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
+The plan is already written — subagents implement, orchestrator manages.
 
 For each task:
 1. Mark as in_progress
@@ -39,7 +39,6 @@ For each task:
    ```
    Agent tool call:
      subagent_type: general-purpose
-     
      prompt: |
        Task: [task subject]
        [full task description from plan]
@@ -57,11 +56,43 @@ For each task:
 
 **Only stop if blocked** — see "When to Stop" below.
 
-### Step 3: Update Feature File, Audit & PR (REQUIRED)
+### Step 3: Write Business Documentation (REQUIRED)
 
-After ALL tasks complete and verified:
-1. Update feature file status to `done` (use `feature-context` skill — business docs format)
-2. **RUN `/pre-merge-review`** — 3 audit rounds (6 auditors each), fixes between rounds, saves reports + summary + issues
+After ALL tasks complete and verified, **BEFORE audit**:
+
+<HARD-RULE>
+Replace dev sections (Co zrobione/TODO/Known issues) in feature file with business documentation.
+The feature file MUST contain these sections BEFORE creating a PR:
+
+```markdown
+## Co to jest
+1-2 zdania: co robi ten feature z perspektywy użytkownika/biznesu.
+
+## Po co to
+Jaki problem biznesowy rozwiązuje.
+
+## Co można zrobić
+Lista możliwości z perspektywy użytkownika — CO może zrobić, nie JAK zaimplementowane.
+
+## Jak używać
+Krok po kroku dla użytkownika.
+
+## Decyzje
+| Decyzja | Dlaczego |
+|---------|----------|
+
+## Nie w scope
+Co świadomie pominięto.
+```
+
+This is NON-NEGOTIABLE. If feature file has no "Co to jest" section → STOP and write it.
+PR body is generated FROM these sections — without them, PR will be empty/technical garbage.
+</HARD-RULE>
+
+### Step 4: Audit & PR (REQUIRED)
+
+1. **RUN `/pre-merge-review`** — 3 audit rounds (6 auditors each), fixes between rounds, saves reports + summary + issues
+2. **Verify feature file still has business sections** (audit fixes might have broken it)
 3. Push branch and create PR (target: `base_branch` from feature file)
 
 **PR body** is generated from 3 sources:
@@ -70,13 +101,15 @@ After ALL tasks complete and verified:
 2. **Audit summary** (`.ai/audit/<branch>/summary.md`) → Quality Audit section
 3. **Issues** (`.ai/audit/<branch>/issues.md`) → Deferred Issues section
 
+PR body MUST start with business context (problem → solution → what user can do), NOT technical details.
+
 ```bash
 gh pr create --base <base-branch> --title "<feature name>" --body "$(cat <<'EOF'
 ## Summary
-[From feature file: Co to jest — 2-3 sentences]
+[From feature file: Co to jest + Po co to — business problem and solution, 2-3 sentences]
 
 ## What was built
-[From feature file: Co można zrobić — bullet points]
+[From feature file: Co można zrobić — user-facing capabilities, bullet points]
 
 ## Quality Audit
 [From summary.md: totals + per-agent ratings]
@@ -123,7 +156,8 @@ Do NOT stop for:
 - Don't skip verifications
 - Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
-- After last task: update feature file → /pre-merge-review → PR
+- After last task: **write business docs in feature file (Step 3)** → /pre-merge-review → PR (Step 4)
+- PR body starts with BUSINESS context, not technical details
 
 ## Integration
 
