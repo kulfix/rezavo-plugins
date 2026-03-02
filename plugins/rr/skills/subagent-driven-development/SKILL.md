@@ -49,8 +49,8 @@ Before anything else:
 Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of what passes/fails before you touch code.
 
 ```bash
-# Backend tests
-./cli.py test up --no-build
+# Backend tests (rebuild to avoid stale containers)
+./cli.py test up
 mkdir -p .ai/test-results/<branch-name>
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
 ./cli.py test down

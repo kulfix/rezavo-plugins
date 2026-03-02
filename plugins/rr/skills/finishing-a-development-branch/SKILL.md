@@ -27,7 +27,7 @@ Use `feature-context` skill: set `status: done`, verify all plan items reflected
 ### Step 2: Start Backend Docker
 
 ```bash
-./cli.py test up --no-build
+./cli.py test up    # rebuild to avoid stale containers
 ```
 
 Verify containers healthy before proceeding. Keep running through Steps 3-4.
