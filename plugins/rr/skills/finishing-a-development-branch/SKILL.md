@@ -65,7 +65,6 @@ Parse pytest summary. Extract failed test names to `final-failures.txt`.
 <HARD-RULE>
 This is an AUTOMATIC workflow. No "present options to user". No "create PR with warnings".
 Failures → FIX → retest → loop until clean. Then proceed.
-Max 3 fix iterations. If still failing after 3 → STOP and report what couldn't be fixed.
 </HARD-RULE>
 
 Baseline file: `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
@@ -78,7 +77,7 @@ FIX LOOP:
 1. Parse failed test names (exclude pre-existing from baseline if it exists)
 2. Fix the code (not the test — unless test itself is wrong)
 3. Re-run: ./cli.py test run -g all
-4. Still failing? → back to 1 (max 3 iterations)
+4. Still failing? → back to 1
 5. Clean? → continue to Step 6
 ```
 
