@@ -24,13 +24,15 @@ If NOT — **STOP. Run `/pre-merge-review` first.**
 
 Use `feature-context` skill: set `status: done`, verify all plan items reflected.
 
-### Step 2: Start Backend Docker
+### Step 2: Start Docker Environment
 
 ```bash
-./cli.py test up    # rebuild to avoid stale containers
+./cli.py e2e up    # rebuild — has backend + frontend + postgres + redis
 ```
 
-Verify containers healthy before proceeding. Keep running through Steps 3-4.
+Verify containers healthy before proceeding. Keep running through Steps 3-5.
+
+`e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Step 3).
 
 ### Step 3: Visual Verification (AUTOMATIC)
 
@@ -79,9 +81,9 @@ Pre-existing: M (evidence: .ai/test-results/<branch>/baseline-backend.log)
 
 ### Step 6: E2E Tests
 
+E2E Docker is already running from Step 2.
+
 ```bash
-./cli.py test down                    # Free ports for E2E Docker
-./cli.py e2e up
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/final-e2e.log
 ./cli.py e2e down
 ```

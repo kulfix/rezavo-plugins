@@ -25,7 +25,8 @@ Sprawdz: `./cli.py test groups`
 **Osobne srodowisko Docker** — nie mieszaj z backend:
 
 ```bash
-./cli.py e2e up               # Start
+./cli.py e2e up               # Build & start
+./cli.py e2e up --no-build    # Start bez rebuild (szybciej)
 ./cli.py e2e test smoke       # Konkretna grupa
 ./cli.py e2e test all         # Wszystkie grupy
 ./cli.py e2e test smoke --debug # Z inspektorem
