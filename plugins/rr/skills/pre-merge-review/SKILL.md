@@ -1,25 +1,16 @@
 ---
 name: pre-merge-review
 description: >
-  Use as the final quality step before PR creation.
-  Runs 2 audit rounds (R2 conditional) with 3 auditors, produces reports and summary.
+  Use as the final quality step before PR creation, after implementation is complete
 ---
 
 # Pre-Merge Review
 
 2-round audit cycle: audit → fix → report, then conditional R2, then summary.
 
-## Overview
+**Core principle:** Orchestrate audits. All scope resolution is done by `rr:audit` — this skill only manages rounds, fixes, and reports.
 
-Orchestrate up to 2 rounds of `/audit` + fix. Each round:
-1. Run `rr:audit` (3 agents, findings, triage, tasks)
-2. Execute all tasks (fix findings)
-3. Commit fixes
-4. Save audit report to file
-
-After rounds: generate summary + present to user. Done.
-
-Pre-merge-review does NOT create PRs — that's the caller's responsibility (executing-plans or user).
+Pre-merge-review does NOT create PRs — that's the caller's responsibility.
 
 ## Invocation
 
@@ -31,64 +22,42 @@ Pre-merge-review does NOT create PRs — that's the caller's responsibility (exe
 
 Pass arguments through to `rr:audit`.
 
-## Directory Structure
+## The Process
 
-All reports go in `.ai/audit/<branch-name>/` (branch `/` → `-`):
+### Step 1: Setup
 
-```
-.ai/audit/<branch-name>/
-├── round-1.md
-├── round-2.md       ← only if R1 had MUST FIX or DEFERRED
-├── summary.md
-└── issues.md        ← deferred findings (created by audit skill)
-```
+1. Get branch name: `git branch --show-current`
+2. Convert to directory name (replace `/` with `-`)
+3. Create `.ai/audit/<branch-name>/` directory
+4. Clean old reports in that directory (if re-run). Preserve other branches' directories.
 
-Clean up the branch directory before starting (if re-run). Preserve other branches.
+### Step 2: Round 1 — Audit
 
-## Execution
+Invoke `rr:audit` skill (pass scope arguments through).
 
-### Setup
+Audit handles everything: reads feature file, resolves scope, dispatches agents, triages findings, creates tasks.
 
-1. Determine `<branch-name>` from current git branch (replace `/` with `-`)
-2. Create `.ai/audit/<branch-name>/` directory
-3. Clean up old reports in that directory (if re-run)
+### Step 3: Round 1 — Fix Tasks
 
-### Round 1
-
-1. Invoke `rr:audit` skill (pass scope arguments through)
-2. Audit creates tasks from MUST FIX findings, writes DEFERRED to issues.md
-3. Execute all tasks as subagents (one Agent per task)
-4. Commit: `fix: audit round 1 — [summary of fixes]`
-5. Save report: `.ai/audit/<branch-name>/round-1.md`
-
-### Round 2 (conditional — only if R1 had MUST FIX or DEFERRED)
-
-1. Invoke `rr:audit` with ONLY Fletcher + Paranoik (2 agents, regression check)
-2. Focus: verify R1 fixes didn't introduce regressions
-3. If findings → new tasks → execute → commit: `fix: audit round 2 — [summary]`
-4. Save report: `.ai/audit/<branch-name>/round-2.md`
-5. In report, note which findings are NEW vs REMAINING from round 1
-
-**Skip R2 if:** R1 had 0 MUST FIX AND 0 DEFERRED findings (clean pass).
-
-### Fixing Tasks — Subagents
-
-Dispatch each fix task as a `general-purpose` Agent.
+Execute all MUST FIX tasks from Round 1 as subagents:
 
 ```
 Agent tool call per task:
   subagent_type: general-purpose
-  prompt: "Fix: [task description from TaskCreate]. File: [path]. Problem: [what]. Fix: [how]."
+  prompt: "Fix: [task description]. File: [path]. Problem: [what]. Fix: [how]."
 ```
 
-Run independent fix tasks in parallel where possible. Wait for all to complete before committing.
+Run independent tasks in parallel. Wait for all to complete.
 
-### Report File Format
+### Step 4: Round 1 — Commit + Report
 
-Each `round-N.md`:
+1. Commit fixes: `fix: audit round 1 — [summary of fixes]`
+2. Save report to `.ai/audit/<branch-name>/round-1.md`
+
+Report format:
 
 ```markdown
-# Audit Round N
+# Audit Round 1
 
 **Date:** YYYY-MM-DD
 **Feature:** [name]
@@ -102,7 +71,6 @@ Each `round-N.md`:
 | 1 | Fletcher | Critical | app/foo.py:42 | N+1 query | FIXED |
 | 2 | Paranoik | Important | app/bar.py:10 | Missing tenant check | FIXED |
 | 3 | Fletcher | Minor | app/baz.py:5 | Naming | FALSE POSITIVE — [reason] |
-| 4 | Javert | Important | tests/test_foo.py | TQ-2 mock scope | DEFERRED — separate test refactor |
 
 ## Per-Agent Summary
 
@@ -115,9 +83,27 @@ Javert:    [DELIVERED/INCOMPLETE/ABANDONED] — X/Y requirements
 X findings total: Y fixed, Z false positives, W deferred
 ```
 
-### Generate Summary
+### Step 5: Round 2 Decision
 
-After rounds complete, generate `.ai/audit/<branch-name>/summary.md`:
+**Skip R2 if:** R1 had 0 MUST FIX AND 0 DEFERRED → go to Step 8.
+
+**Run R2 if:** R1 had ANY MUST FIX or DEFERRED.
+
+### Step 6: Round 2 — Audit (regression check)
+
+Invoke `rr:audit` with ONLY Fletcher + Paranoik (2 agents). Focus: verify R1 fixes didn't introduce regressions.
+
+### Step 7: Round 2 — Fix + Commit + Report
+
+Same as Steps 3-4 but for Round 2:
+1. Execute fix tasks as subagents
+2. Commit: `fix: audit round 2 — [summary]`
+3. Save report: `.ai/audit/<branch-name>/round-2.md`
+4. Note which findings are NEW vs REMAINING from R1
+
+### Step 8: Generate Summary
+
+Write `.ai/audit/<branch-name>/summary.md`:
 
 ```markdown
 # Pre-Merge Review Summary
@@ -156,9 +142,7 @@ Paranoik:  [final rating] — X total findings
 Javert:    [final rating] — X/Y requirements met
 ```
 
-### Present to User
-
-After generating summary, show the user:
+### Step 9: Present to User
 
 ```
 PRE-MERGE REVIEW COMPLETE
@@ -190,12 +174,12 @@ Do NOT ask "Approve for PR?" — the caller decides what to do next.
 
 | Mistake | Fix |
 |---------|-----|
+| Running git diff yourself | Audit handles scope. Step 1 is directory setup only. |
 | Skipping R2 prematurely | R2 required if R1 had ANY MUST FIX or DEFERRED |
-| Running R2 when R1 clean | Skip R2 if 0 MUST FIX and 0 DEFERRED — saves resources |
+| Running R2 when R1 clean | Skip R2 if 0 MUST FIX and 0 DEFERRED |
 | Not saving reports | Every round MUST produce a report file |
-| Reports in wrong directory | Use `.ai/audit/<branch-name>/`, not `.ai/audit/` |
-| Asking for PR approval | Pre-merge-review does NOT create PRs, just reports |
-| Fixing inside audit | Audit reports. Pre-merge-review orchestrates fixing between audits. |
+| Reports in wrong directory | Use `.ai/audit/<branch-name>/` |
+| Fixing inside audit | Audit reports. This skill fixes between audits. |
 | Not committing between rounds | Each round's fixes get their own commit |
 
 **USES:** rr:audit
