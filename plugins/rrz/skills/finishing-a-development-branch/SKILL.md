@@ -69,12 +69,19 @@ If baseline doesn't exist — ALL failures are unverified. WARN loudly.
 
 Read `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
 
+<HARD-RULE>
+Failures without baseline evidence = UNVERIFIED = gate NOT passed.
+You CANNOT claim "0 new failures" when there is no baseline to compare against.
+No baseline + any failures → present options to user. NEVER auto-create PR.
+</HARD-RULE>
+
 | Situation | Action |
 |-----------|--------|
-| NEW failures (in final, not in baseline) | **STOP.** Must fix before proceeding. |
-| Pre-existing only (in both files) | Document with evidence. Continue. |
-| No baseline file | **WARN:** all failures unverified. Present to user. |
 | Zero failures | All green. Continue. |
+| Pre-existing only (in both baseline AND final) | Document with evidence. Continue. |
+| NEW failures (in final, not in baseline) | **STOP.** Must fix before proceeding. |
+| No baseline + any failures | **STOP.** Gate NOT passed. Present to user (Step 7 fallback). |
+| No baseline + zero failures | Continue (nothing to verify). |
 
 Print summary:
 ```
@@ -92,10 +99,11 @@ E2E Docker is already running from Step 2.
 ./cli.py e2e down
 ```
 
-Compare with baseline E2E (`baseline-e2e.log`) — same logic as Step 5:
-- NEW E2E failures (not in baseline) → **STOP.** Must fix.
-- Pre-existing E2E failures (in both) → Document with evidence. Continue.
-- No E2E baseline → **WARN.** All E2E failures unverified.
+Compare with baseline E2E (`baseline-e2e.log`) — same HARD-RULE as Step 5:
+- Zero failures → Continue.
+- Pre-existing (in both baseline AND final) → Document with evidence. Continue.
+- NEW failures (not in baseline) → **STOP.** Must fix.
+- No baseline + any failures → **STOP.** Gate NOT passed. Present to user.
 
 ### Step 7: Push + Auto-PR (or Fallback)
 
@@ -103,7 +111,7 @@ Compare with baseline E2E (`baseline-e2e.log`) — same logic as Step 5:
 git push -u origin <feature-branch>
 ```
 
-**All gates pass → auto-create PR:**
+**All gates pass → auto-create PR** (ONLY if zero failures OR all failures have baseline evidence):
 
 ```
 All gates passed. Creating PR.
@@ -141,8 +149,8 @@ Some gates did not fully pass:
 [From feature file: Co można zrobić — bullet points]
 
 ## Screenshots
-[From .ai/screenshots/<branch-name>/ if visual verification done]
-![Description](.ai/screenshots/<branch-name>/filename.png)
+[From .ai/screenshots/<branch-name>/ — use raw GitHub URLs, NOT file paths]
+![Description](https://raw.githubusercontent.com/<org>/<repo>/<branch>/.ai/screenshots/<branch-name>/filename.png)
 [If no UI changes: "No frontend changes in this feature."]
 
 ## Test Results
@@ -194,7 +202,8 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 | "E2E is slow, skip it" | E2E is mandatory. Full suite. |
 | "Only 1 .css changed, skip visual" | Any frontend file = visual verification. |
 | "Let me ask if visual is needed" | NEVER ask. Check diff. Act. |
-| "Baseline not found, assume clean" | WARN: all failures unverified. |
+| "Baseline not found, assume clean" | No baseline + failures = gate FAILED. Present to user. |
+| "0 new failures" (no baseline) | You can't have "0 new" without a baseline to compare. Gate FAILED. |
 
 ## Integration
 
