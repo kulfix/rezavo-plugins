@@ -25,7 +25,7 @@ Dispatch rr:code-reviewer subagent to catch issues before they cascade.
 
 **1. Get git SHAs:**
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+BASE_SHA=$(git rev-parse HEAD~1)  # or origin/<base_branch> from feature file (NOT always main)
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
