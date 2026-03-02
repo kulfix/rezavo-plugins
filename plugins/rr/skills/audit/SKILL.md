@@ -29,13 +29,18 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 1. Find feature file: `.ai/features/` matching current branch
 2. Read `files:` from frontmatter — **this is the scope**
 3. If `files:` empty/missing → fallback: detect base branch, then diff
-   ```bash
-   # Detect base branch (do NOT hardcode main/master)
-   BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@') \
-     || BASE=$(git branch -r | grep -oP 'origin/\K(main|master)' | head -1) \
-     || BASE="main"
-   git diff $(git merge-base HEAD "$BASE")...HEAD --name-only
    ```
+   Priority for base branch:
+   1. Read `base_branch:` from feature file frontmatter (source of truth)
+   2. If no feature file or no base_branch → ASK the user (do NOT guess)
+   ```
+   Then: `git diff $(git merge-base HEAD origin/$BASE)...HEAD --name-only`
+
+   <HARD-RULE>
+   NEVER assume `main` or `master` as base branch. Feature branches can be chained
+   (e.g. main → feature/A → feature/B). Wrong base = audit reviews code you didn't write.
+   If base_branch is unknown → ASK. Do not guess.
+   </HARD-RULE>
 4. Read `plans:` from frontmatter — spec for Javert
 
 <HARD-RULE>

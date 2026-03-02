@@ -85,6 +85,9 @@ E2E weryfikuja Acceptance Scenarios z design doc. Pisz PO implementacji.
 
 | DON'T | DO |
 |-------|-----|
-| `networkidle` | Explicit selectors |
+| `networkidle` | Explicit selectors (`waitFor`, `toBeVisible`) |
+| `waitForTimeout()` | `waitForResponse()` lub `locator.waitFor()` |
+| Soft assertions (`if (exists) { ok } else { log }`) | Hard assertions (`expect(...).toBeVisible()`) |
 | UI login | `loginViaAPI(page)` |
 | Hardcoded URLs | `BASE_URL` from config |
+| Duplicate login in helpers | Shared `getApiToken(request)` helper |

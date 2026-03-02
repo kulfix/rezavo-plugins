@@ -19,7 +19,7 @@ Living document per feature. Other skills read it to understand scope — especi
 ---
 status: planned | in_progress | done | blocked
 branch: feature/my-feature
-base_branch: main  # branch this feature was created from (for PR targeting)
+base_branch: main  # REQUIRED — branch this was created from (used by audit + PR targeting)
 blocked_by: other-feature  # optional
 plans:
   - docs/plans/2026-02-28-design.md
@@ -106,6 +106,7 @@ git diff HEAD~1 --name-only
 | Mistake | Fix |
 |---------|-----|
 | Not updating `files:` after tasks | rr:audit falls back to full branch diff — noisy |
+| Missing `base_branch:` | rr:audit can't determine diff scope — will ask user, blocking automation |
 | Adding every touched file | Only files central to feature |
 | No feature file before executing plans | Create during brainstorming or manually |
 | Missing `plans:` link | rr:audit (Javert) can't verify completeness |
