@@ -68,15 +68,14 @@ Failures → FIX → retest → loop until clean. Then proceed.
 Max 3 fix iterations. If still failing after 3 → STOP and report what couldn't be fixed.
 </HARD-RULE>
 
-Read baseline: `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
+Baseline file: `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
 
-**Pre-existing failures** (in BOTH baseline AND final) are acceptable — document with evidence. All other failures must be fixed.
-
-**No baseline = no evidence = ALL failures must be fixed.** You CANNOT claim "0 new" without a baseline.
+- **Baseline exists with listed failures** → those specific tests are pre-existing, acceptable. All OTHER failures must be fixed.
+- **No baseline file** → everything was passing during execution. ALL failures are regressions — fix them all.
 
 ```
 FIX LOOP:
-1. Parse failed test names
+1. Parse failed test names (exclude pre-existing from baseline if it exists)
 2. Fix the code (not the test — unless test itself is wrong)
 3. Re-run: ./cli.py test run -g all
 4. Still failing? → back to 1 (max 3 iterations)
@@ -91,7 +90,7 @@ E2E Docker is already running from Step 2.
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/final-e2e.log
 ```
 
-Same fix loop as Step 5 — fix failures, retest, max 3 iterations. Pre-existing (with baseline evidence) are acceptable.
+Same fix loop as Step 5. Baseline: `baseline-e2e.log`. No baseline = all were passing = fix everything.
 
 After E2E passes:
 ```bash
@@ -169,8 +168,8 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 | "E2E is slow, skip it" | E2E is mandatory. Full suite. |
 | "Only 1 .css changed, skip visual" | Any frontend file = visual verification. |
 | "Let me ask if visual is needed" | NEVER ask. Check diff. Act. |
-| "No baseline, assume clean" | No baseline = ALL failures must be fixed. No exceptions. |
-| "0 new failures" (no baseline) | Impossible claim without baseline. Fix all failures. |
+| "No baseline, these are pre-existing" | No baseline = all were passing. Every failure is a regression. Fix it. |
+| "0 new failures" (no baseline) | No baseline means everything passed before. Any failure = new. |
 | "Let me ask what to do" | This is automatic. Fix → retest → loop → PR. |
 | "Create PR with warnings" | NO. Fix first. PR only when clean. |
 
