@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: Use when creating test files, writing test functions, modifying existing tests, adding test coverage, or asking "how to test X". Also use when reviewing tests or setting up test data with factories.
+description: Use when creating test files, writing test functions, modifying existing tests, adding test coverage, writing E2E tests with Playwright, or asking "how to test X". Also use when reviewing tests or setting up test data with factories.
 ---
 
 # Writing Tests
@@ -72,3 +72,19 @@ Kazdy test musi pokryc: null, empty, duplikaty, format miedzynarodowy, granice.
 | `User.role` (legacy) | `UserTenantFactory` (RBAC) |
 | Skip edge cases | Cover null, empty, max |
 | Jeden wielki test | Wiele malych testow |
+
+## E2E Tests (Playwright)
+
+E2E weryfikuja Acceptance Scenarios z design doc. Pisz PO implementacji.
+
+- **Lokalizacja:** `tests/e2e/features/` (feature), `tests/e2e/multi-tenant/` (isolation)
+- **Login:** `loginViaAPI(page)` z `fixtures/config.ts` — NIGDY przez UI
+- **Nazwy:** `SC-XX:` prefix (atomic), `JOURNEY:` prefix (chain ≥3 atomic)
+- **Helpers MT:** `loginAs()`, `switchTenantAPI()`, `getAuthMe()` z `multi-tenant/helpers.ts`
+- **Run:** `./cli.py e2e test features` (local), `gh workflow run e2e-modular.yml` (CI)
+
+| DON'T | DO |
+|-------|-----|
+| `networkidle` | Explicit selectors |
+| UI login | `loginViaAPI(page)` |
+| Hardcoded URLs | `BASE_URL` from config |

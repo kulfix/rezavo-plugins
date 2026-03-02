@@ -27,7 +27,7 @@ You MUST create a task for each of these items and complete them in order:
 2. **Explore project context** — check files, docs, recent commits
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present full design overview** — complete picture with every element rated 1-10 (confidence/clarity), user must see and approve the whole before details
+5. **Present full design overview** — complete picture with every element rated 1-10 (confidence/clarity), MUST include Acceptance Scenarios (Given/When/Then) or explicit N/A
 6. **Refine weak elements** — anything rated below 7 gets discussed until raised or consciously accepted
 7. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
 8. **Transition to implementation** — invoke writing-plans skill to create implementation plan
@@ -116,14 +116,25 @@ DESIGN OVERVIEW
 | 2 | Data model | New kwhotel_room_group_id on RoomType | 8/10 | Simple addition |
 | 3 | Migration strategy | Seed Settings per tenant | 6/10 | Need to clarify rollback |
 | 4 | Error handling | Pre-send validation | 7/10 | Edge cases TBD |
-| 5 | Testing approach | Unit + integration, no E2E | 5/10 | Missing visual verification |
+| 5 | Testing approach | Unit + integration | 7/10 | Factories, markers |
+| 6 | Acceptance Scenarios | Given/When/Then E2E scenarios | 8/10 | SC-01..SC-03 |
 ```
 
 - **Rating meaning:** 1 = no idea how, 5 = rough sketch, 7 = solid plan, 10 = trivial/proven
 - **Anything below 7** must be discussed and either raised or consciously accepted with rationale
+- **Acceptance Scenarios is MANDATORY.** Empty = rating 0/10. For backend-only features (CLI, Celery, migration): use `N/A` with justification.
 - User sees the full picture BEFORE approving — no section-by-section drip
 - After user reviews ratings, refine weak elements together
 - Re-present updated overview until user approves the whole
+
+### Acceptance Scenarios (required in design overview)
+
+Given/When/Then E2E scenarios. Become E2E tasks in the implementation plan.
+
+Minimum: 1-2 atomic per feature. Journey only if ≥3 atomic. Backend-only: N/A with justification.
+
+- **Atomic (SC-XX):** single action → single verification. E.g. `SC-01: Admin creates tenant — Given logged in, When fill form + save, Then toast + visible in list`
+- **Journey:** chain ≥3 atomic scenarios. E.g. `SC-04: Full lifecycle — create (SC-01) → edit (SC-02) → delete (SC-03) → verify gone`
 
 ## Key Principles
 
