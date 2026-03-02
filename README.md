@@ -4,7 +4,7 @@ Plugin marketplace for Rezavo project.
 
 ## Plugins
 
-### rr (v2.1.11)
+### rr (v2.1.12)
 
 Workflow engine: 20 skilli, 5 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
 

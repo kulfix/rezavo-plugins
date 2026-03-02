@@ -114,8 +114,8 @@ At this point ALL tests pass (or only have documented pre-existing failures with
 [From feature file: Co można zrobić — bullet points]
 
 ## Screenshots
-[From .ai/screenshots/<branch-name>/ — use raw GitHub URLs, NOT file paths]
-![Description](https://raw.githubusercontent.com/<org>/<repo>/<branch>/.ai/screenshots/<branch-name>/filename.png)
+[From .ai/screenshots/<branch-name>/ — use github.com/raw/ URLs for private repos]
+![Description](https://github.com/<org>/<repo>/raw/<branch>/.ai/screenshots/<branch-name>/filename.png)
 [If no UI changes: "No frontend changes in this feature."]
 
 ## Test Results
