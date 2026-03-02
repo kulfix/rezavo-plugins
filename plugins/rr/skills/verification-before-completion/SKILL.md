@@ -5,15 +5,11 @@ description: Use when about to claim work is complete, fixed, or passing, before
 
 # Verification Before Completion
 
-## Overview
-
 Claiming work is complete without verification is dishonesty, not efficiency.
 
 **Core principle:** Evidence before claims, always.
 
 **Violating the letter of this rule is violating the spirit of this rule.**
-
-## The Iron Law
 
 ```
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
@@ -21,23 +17,11 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 If you haven't run the verification command in this message, you cannot claim it passes.
 
-## The Gate Function
+## The Process
 
-```
-BEFORE claiming any status or expressing satisfaction:
+### Step 1: Identify
 
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. ONLY THEN: Make the claim
-
-Skip any step = lying, not verifying
-```
-
-## Common Failures
+What command proves this claim? Match claim to required evidence:
 
 | Claim | Requires | Not Sufficient |
 |-------|----------|----------------|
@@ -50,37 +34,42 @@ Skip any step = lying, not verifying
 | Requirements met | Line-by-line checklist | Tests passing |
 | UI works correctly | Playwright screenshot of each touchpoint | "It should look right", unit tests |
 
-## Red Flags - STOP
+If you can't name the exact command — you're not ready to claim.
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- Thinking "just this once"
-- Tired and wanting work over
-- **ANY wording implying success without having run verification**
+### Step 2: Run
 
-## Rationalization Prevention
+Execute the FULL command. Fresh, complete, not partial.
 
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "I'm tired" | Exhaustion ≠ excuse |
-| "Partial check is enough" | Partial proves nothing |
-| "Different words so rule doesn't apply" | Spirit over letter |
+- Fresh = in this message, not from earlier
+- Complete = full command, not subset
+- Not partial = `pytest` not `pytest tests/one_file.py` when claiming "all tests pass"
 
-## Key Patterns
+### Step 3: Read
 
-**Tests:**
+Read the FULL output. Check exit code. Count failures.
+
+- Don't skim — read every line
+- Note exit code (0 = success)
+- Count: X passed, Y failed, Z errors
+- Warnings count as potential issues
+
+### Step 4: Verify
+
+Does output confirm the claim?
+
+- **YES** → proceed to Step 5
+- **NO** → state actual status with evidence. Do NOT claim success.
+
+### Step 5: Claim
+
+ONLY NOW can you make the claim — with evidence inline:
+
 ```
 ✅ [Run test command] [See: 34/34 pass] "All tests pass"
 ❌ "Should pass now" / "Looks correct"
 ```
+
+More patterns:
 
 **Regression tests (TDD Red-Green):**
 ```
@@ -106,35 +95,28 @@ Skip any step = lying, not verifying
 ❌ Trust agent report
 ```
 
-## Why This Matters
+## Red Flags — STOP
 
-From 24 failure memories:
-- your human partner said "I don't believe you" - trust broken
-- Undefined functions shipped - would crash
-- Missing requirements shipped - incomplete features
-- Time wasted on false completion → redirect → rework
-- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+If you catch yourself doing ANY of these, go back to Step 1:
 
-## When To Apply
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!")
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
 
-**ALWAYS before:**
-- ANY variation of success/completion claims
-- ANY expression of satisfaction
-- ANY positive statement about work state
-- Committing, PR creation, task completion
-- Moving to next task
-- Delegating to agents
+## Common Mistakes
 
-**Rule applies to:**
-- Exact phrases
-- Paraphrases and synonyms
-- Implications of success
-- ANY communication suggesting completion/correctness
-
-## The Bottom Line
-
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |

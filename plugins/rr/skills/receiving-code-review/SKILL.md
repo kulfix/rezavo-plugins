@@ -5,49 +5,29 @@ description: Use when receiving code review feedback, before implementing sugges
 
 # Code Review Reception
 
-## Overview
-
 Code review requires technical evaluation, not emotional performance.
 
 **Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
 
-## The Response Pattern
+## The Process
 
-```
-WHEN receiving code review feedback:
+### Step 1: Read
 
-1. READ: Complete feedback without reacting
-2. UNDERSTAND: Restate requirement in own words (or ask)
-3. VERIFY: Check against codebase reality
-4. EVALUATE: Technically sound for THIS codebase?
-5. RESPOND: Technical acknowledgment or reasoned pushback
-6. IMPLEMENT: One item at a time, test each
-```
+Read complete feedback without reacting. Do NOT respond yet.
 
-## Forbidden Responses
-
-**NEVER:**
+**Forbidden responses (NEVER use):**
 - "You're absolutely right!" (explicit CLAUDE.md violation)
 - "Great point!" / "Excellent feedback!" (performative)
 - "Let me implement that now" (before verification)
 
-**INSTEAD:**
-- Restate the technical requirement
-- Ask clarifying questions
-- Push back with technical reasoning if wrong
-- Just start working (actions > words)
+### Step 2: Understand
 
-## Handling Unclear Feedback
+Restate each requirement in your own words.
 
-```
-IF any item is unclear:
-  STOP - do not implement anything yet
-  ASK for clarification on unclear items
+If ANY item is unclear — **STOP.** Do not implement anything. Ask for clarification on ALL unclear items first.
 
-WHY: Items may be related. Partial understanding = wrong implementation.
-```
+Items may be related. Partial understanding = wrong implementation.
 
-**Example:**
 ```
 your human partner: "Fix 1-6"
 You understand 1,2,3,6. Unclear on 4,5.
@@ -56,37 +36,33 @@ You understand 1,2,3,6. Unclear on 4,5.
 ✅ RIGHT: "I understand items 1,2,3,6. Need clarification on 4 and 5 before proceeding."
 ```
 
-## Source-Specific Handling
+### Step 3: Verify
 
-### From your human partner
-- **Trusted** - implement after understanding
-- **Still ask** if scope unclear
-- **No performative agreement**
-- **Skip to action** or technical acknowledgment
+Check each suggestion against codebase reality.
 
-### From External Reviewers
-```
-BEFORE implementing:
-  1. Check: Technically correct for THIS codebase?
-  2. Check: Breaks existing functionality?
-  3. Check: Reason for current implementation?
-  4. Check: Works on all platforms/versions?
-  5. Check: Does reviewer understand full context?
+**From your human partner:**
+- Trusted — implement after understanding
+- Still ask if scope unclear
+- Skip to action or technical acknowledgment
 
-IF suggestion seems wrong:
-  Push back with technical reasoning
+**From external reviewers — BEFORE implementing:**
+1. Technically correct for THIS codebase?
+2. Breaks existing functionality?
+3. Reason for current implementation?
+4. Works on all platforms/versions?
+5. Does reviewer understand full context?
 
-IF can't easily verify:
-  Say so: "I can't verify this without [X]. Should I [investigate/ask/proceed]?"
+If suggestion seems wrong → push back with technical reasoning.
+If can't easily verify → say so: "I can't verify this without [X]. Should I [investigate/ask/proceed]?"
+If conflicts with your human partner's prior decisions → stop and discuss with your human partner first.
 
-IF conflicts with your human partner's prior decisions:
-  Stop and discuss with your human partner first
-```
+**Your human partner's rule:** "External feedback - be skeptical, but check carefully"
 
-**your human partner's rule:** "External feedback - be skeptical, but check carefully"
+### Step 4: Evaluate
 
-## YAGNI Check for "Professional" Features
+Is each suggestion technically sound for THIS codebase?
 
+**YAGNI check:**
 ```
 IF reviewer suggests "implementing properly":
   grep codebase for actual usage
@@ -95,24 +71,9 @@ IF reviewer suggests "implementing properly":
   IF used: Then implement properly
 ```
 
-**your human partner's rule:** "You and reviewer both report to me. If we don't need this feature, don't add it."
+**Your human partner's rule:** "You and reviewer both report to me. If we don't need this feature, don't add it."
 
-## Implementation Order
-
-```
-FOR multi-item feedback:
-  1. Clarify anything unclear FIRST
-  2. Then implement in this order:
-     - Blocking issues (breaks, security)
-     - Simple fixes (typos, imports)
-     - Complex fixes (refactoring, logic)
-  3. Test each fix individually
-  4. Verify no regressions
-```
-
-## When To Push Back
-
-Push back when:
+**Push back when:**
 - Suggestion breaks existing functionality
 - Reviewer lacks full context
 - Violates YAGNI (unused feature)
@@ -128,9 +89,11 @@ Push back when:
 
 **Signal if uncomfortable pushing back out loud:** "Strange things are afoot at the Circle K"
 
-## Acknowledging Correct Feedback
+### Step 5: Respond
 
-When feedback IS correct:
+Technical acknowledgment or reasoned pushback. Never performative.
+
+**When feedback IS correct:**
 ```
 ✅ "Fixed. [Brief description of what changed]"
 ✅ "Good catch - [specific issue]. Fixed in [location]."
@@ -143,13 +106,11 @@ When feedback IS correct:
 ❌ ANY gratitude expression
 ```
 
-**Why no thanks:** Actions speak. Just fix it. The code itself shows you heard the feedback.
+Actions speak. Just fix it. The code itself shows you heard the feedback.
 
-**If you catch yourself about to write "Thanks":** DELETE IT. State the fix instead.
+If you catch yourself about to write "Thanks" — DELETE IT. State the fix instead.
 
-## Gracefully Correcting Your Pushback
-
-If you pushed back and were wrong:
+**If you pushed back and were wrong:**
 ```
 ✅ "You were right - I checked [X] and it does [Y]. Implementing now."
 ✅ "Verified this and you're correct. My initial understanding was wrong because [reason]. Fixing."
@@ -160,6 +121,17 @@ If you pushed back and were wrong:
 ```
 
 State the correction factually and move on.
+
+### Step 6: Implement
+
+One item at a time. Test each fix individually.
+
+**Order for multi-item feedback:**
+1. Blocking issues (breaks, security)
+2. Simple fixes (typos, imports)
+3. Complex fixes (refactoring, logic)
+
+Test each fix individually. Verify no regressions after each.
 
 ## Common Mistakes
 
@@ -203,11 +175,3 @@ You understand 1,2,3,6. Unclear on 4,5.
 ## GitHub Thread Replies
 
 When replying to inline review comments on GitHub, reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
-
-## The Bottom Line
-
-**External feedback = suggestions to evaluate, not orders to follow.**
-
-Verify. Question. Then implement.
-
-No performative agreement. Technical rigor always.
