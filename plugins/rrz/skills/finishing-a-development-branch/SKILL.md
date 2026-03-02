@@ -60,84 +60,51 @@ git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|c
 
 Parse pytest summary. Extract failed test names to `final-failures.txt`.
 
-### Step 5: Compare Baseline vs Final
+### Step 5: Fix Loop — Backend Tests
 
 <HARD-RULE>
-Never claim failures are "pre-existing" without baseline evidence.
-If baseline doesn't exist — ALL failures are unverified. WARN loudly.
+This is an AUTOMATIC workflow. No "present options to user". No "create PR with warnings".
+Failures → FIX → retest → loop until clean. Then proceed.
+Max 3 fix iterations. If still failing after 3 → STOP and report what couldn't be fixed.
 </HARD-RULE>
 
-Read `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
+Read baseline: `.ai/test-results/<branch-name>/baseline-failures.txt` (created by executing-plans/subagent-driven-development).
 
-<HARD-RULE>
-Failures without baseline evidence = UNVERIFIED = gate NOT passed.
-You CANNOT claim "0 new failures" when there is no baseline to compare against.
-No baseline + any failures → present options to user. NEVER auto-create PR.
-</HARD-RULE>
+**Pre-existing failures** (in BOTH baseline AND final) are acceptable — document with evidence. All other failures must be fixed.
 
-| Situation | Action |
-|-----------|--------|
-| Zero failures | All green. Continue. |
-| Pre-existing only (in both baseline AND final) | Document with evidence. Continue. |
-| NEW failures (in final, not in baseline) | **STOP.** Must fix before proceeding. |
-| No baseline + any failures | **STOP.** Gate NOT passed. Present to user (Step 7 fallback). |
-| No baseline + zero failures | Continue (nothing to verify). |
+**No baseline = no evidence = ALL failures must be fixed.** You CANNOT claim "0 new" without a baseline.
 
-Print summary:
 ```
-Backend tests: X passed, Y failed
-New failures: N (must fix) / 0 (clean)
-Pre-existing: M (evidence: .ai/test-results/<branch>/baseline-backend.log)
+FIX LOOP:
+1. Parse failed test names
+2. Fix the code (not the test — unless test itself is wrong)
+3. Re-run: ./cli.py test run -g all
+4. Still failing? → back to 1 (max 3 iterations)
+5. Clean? → continue to Step 6
 ```
 
-### Step 6: E2E Tests
+### Step 6: Fix Loop — E2E Tests
 
 E2E Docker is already running from Step 2.
 
 ```bash
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/final-e2e.log
+```
+
+Same fix loop as Step 5 — fix failures, retest, max 3 iterations. Pre-existing (with baseline evidence) are acceptable.
+
+After E2E passes:
+```bash
 ./cli.py e2e down
 ```
 
-Compare with baseline E2E (`baseline-e2e.log`) — same HARD-RULE as Step 5:
-- Zero failures → Continue.
-- Pre-existing (in both baseline AND final) → Document with evidence. Continue.
-- NEW failures (not in baseline) → **STOP.** Must fix.
-- No baseline + any failures → **STOP.** Gate NOT passed. Present to user.
-
-### Step 7: Push + Auto-PR (or Fallback)
+### Step 7: Push + Auto-PR
 
 ```bash
 git push -u origin <feature-branch>
 ```
 
-**All gates pass → auto-create PR** (ONLY if zero failures OR all failures have baseline evidence):
-
-```
-All gates passed. Creating PR.
-
-Audit: 3 rounds complete
-Backend: X passed, 0 new failures (Y pre-existing)
-E2E: PASSED
-Visual: N screenshots (or "skipped — no frontend changes")
-```
-
-**Any gate fails → present options:**
-
-```
-Some gates did not fully pass:
-
-[x] Pre-merge review: DONE
-[x] Feature file: status=done
-[ ] Backend tests: 2 NEW failures
-[x] E2E: PASSED
-[x] Visual verification: 6 screenshots
-
-1. Create PR anyway (with warnings)
-2. Fix failures first
-3. Keep branch as-is
-4. Discard work
-```
+At this point ALL tests pass (or only have documented pre-existing failures with baseline evidence). Auto-create PR — no questions asked.
 
 **PR body template:**
 
@@ -198,12 +165,14 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 | Thought | Reality |
 |---------|---------|
 | "Tests passed during execution" | Per-task ≠ full suite. Run `-g all`. |
-| "These failures are pre-existing" | Without baseline evidence? Hallucination. |
+| "These failures are pre-existing" | Without baseline evidence? Fix them. |
 | "E2E is slow, skip it" | E2E is mandatory. Full suite. |
 | "Only 1 .css changed, skip visual" | Any frontend file = visual verification. |
 | "Let me ask if visual is needed" | NEVER ask. Check diff. Act. |
-| "Baseline not found, assume clean" | No baseline + failures = gate FAILED. Present to user. |
-| "0 new failures" (no baseline) | You can't have "0 new" without a baseline to compare. Gate FAILED. |
+| "No baseline, assume clean" | No baseline = ALL failures must be fixed. No exceptions. |
+| "0 new failures" (no baseline) | Impossible claim without baseline. Fix all failures. |
+| "Let me ask what to do" | This is automatic. Fix → retest → loop → PR. |
+| "Create PR with warnings" | NO. Fix first. PR only when clean. |
 
 ## Integration
 
