@@ -13,23 +13,16 @@ Final gate before PR: verify tests, take screenshots, run E2E, auto-create PR.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
-<HARD-RULE>
-NEVER use `main` as base for diffs or PRs without checking feature file first.
-Base branch comes from `.ai/features/<name>.md` frontmatter `base_branch:`.
-Chains like `main → feature/A → feature/B` are common — feature/B's base is feature/A, NOT main.
-Do NOT run `git log main..HEAD` or `git diff main...HEAD` before reading the feature file.
-</HARD-RULE>
-
 ## The Process
 
-### Step 0: Resolve Base Branch + Verify Gate (REQUIRED)
+### Step 0: Verify Gate (REQUIRED)
 
-1. Read feature file (`.ai/features/`) — extract `base_branch:` from frontmatter
-2. If not set → **ASK user.** Do NOT assume `main`.
-3. Check if `/pre-merge-review` was run (look for `.ai/audit/<branch-name>/summary.md`)
-4. If NOT — **STOP. Run `/pre-merge-review` first.**
+`<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN or missing → **ASK user.** Do NOT assume `main`.
 
-All subsequent steps use `<base-branch>` — this is the value from the feature file, not `main`.
+1. Check if `/pre-merge-review` was run (look for `.ai/audit/<branch-name>/summary.md`)
+2. If NOT — **STOP. Run `/pre-merge-review` first.**
+
+All subsequent steps use `<base-branch>` — NEVER hardcode `main`.
 
 ### Step 1: Update Feature File
 
@@ -56,7 +49,7 @@ If ANY frontend file changed — run visual verification. No exceptions.
 git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|css|scss|jinja)$'
 ```
 
-- **Matches found:** Run `rrz:visual-verification` skill. Docker is already running — skill should skip startup.
+- **Matches found:** Run `rr:visual-verification` skill. Docker is already running — skill should skip startup.
 - **No matches:** Skip. Log: "No frontend files in diff — skipping visual verification."
 
 ### Step 4: Final Backend Tests
@@ -207,5 +200,5 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 
 **Called by:** `subagent-driven-development`, `executing-plans` — after pre-merge-review
 **Requires:** `pre-merge-review` completed (Step 0), `feature-context` (Step 1)
-**Uses:** `visual-verification` (Step 3, automatic), `rrz:workflow-monitor` (optional, E2E)
+**Uses:** `visual-verification` (Step 3, automatic), `rr:workflow-monitor` (optional, E2E)
 **Reads:** `.ai/test-results/<branch>/baseline-failures.txt` from executor skills

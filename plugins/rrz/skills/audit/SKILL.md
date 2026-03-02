@@ -9,14 +9,11 @@ description: >
 
 3 auditors in parallel produce findings. Findings become tasks.
 
-## Overview
-
-Dispatch 3 Agent tool calls in ONE message. Each reviews a different aspect.
-Collect findings. Create TaskCreate per finding. Done.
+**Core principle:** Feature file defines scope. Read it first. Dispatch agents. Triage findings. Done.
 
 Fixing = separate step (user runs tasks manually or via executing-plans).
 
-## Scope Resolution
+## Invocation
 
 ```
 /audit           → feature file files: (default)
@@ -24,78 +21,73 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 /audit <name>    → specific .ai/features/<name>.md
 ```
 
-### Resolve steps
+## The Process
 
-1. Find feature file: `.ai/features/` matching current branch
-2. Read `files:` from frontmatter — **this is the scope**
-3. If `files:` empty/missing → fallback: detect base branch, then diff
-   ```bash
-   # Detect base branch (do NOT hardcode main/master)
-   BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@') \
-     || BASE=$(git branch -r | grep -oP 'origin/\K(main|master)' | head -1) \
-     || BASE="main"
-   git diff $(git merge-base HEAD "$BASE")...HEAD --name-only
-   ```
-4. Read `plans:` from frontmatter — spec for Javert
+### Step 1: Read Feature File
 
-<HARD-RULE>
-If `files:` has entries → THAT IS THE SCOPE. Do NOT run git diff. Do NOT expand scope.
-Git diff fallback is ONLY for when `files:` is empty or missing.
-</HARD-RULE>
+Find feature file matching current branch in `.ai/features/`.
 
-## Agents
+```bash
+git branch --show-current
+# → feature/foo → look for .ai/features/foo.md or similar
+```
+
+Read the file. Extract from frontmatter:
+- `files:` — review scope
+- `plans:` — spec for Javert
+
+If no feature file exists → **STOP.** Create one with `rr:feature-context` first.
+
+### Step 2: Determine Scope
+
+`<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN → **ASK user.** Do NOT assume `main`.
+
+**If `files:` has entries → THAT IS THE SCOPE.** Do NOT run git diff. Do NOT expand scope. Go to Step 3.
+
+**If `files:` is empty/missing → fallback to diff:**
+```bash
+git diff $(git merge-base HEAD origin/<base-branch>)...HEAD --name-only
+```
+
+### Step 3: Dispatch 3 Agents
+
+Send ONE message with 3 Agent tool calls in parallel:
 
 | Agent | subagent_type | Reviews |
 |-------|---------------|---------|
-| Fletcher | Fletcher - code reviewer | Code quality, simplicity, schema on scoped files |
-| Paranoik | Paranoik - security auditor | Security, tenant isolation, migrations on scoped files |
-| Javert | Javert - completeness auditor | Spec vs implementation + test quality gate |
+| Fletcher | `rr:Fletcher - code reviewer` | Code quality, simplicity, schema |
+| Paranoik | `rr:Paranoik - security auditor` | Security, tenant isolation, migrations |
+| Javert | `rr:Javert - completeness auditor` | Spec vs implementation + test quality gate |
 
-## Agent Prompt
-
-Each agent gets:
-
+Each agent prompt:
 ```
-Review scope: [files from scope resolution]
+Review scope: [files from Step 2]
 Feature: [name from feature file]
-Spec/plans: [plans: from frontmatter]
+Spec/plans: [plans: paths from frontmatter]
 Focus ONLY on scoped files, not legacy code.
 ```
 
-## Execution
+### Step 4: Triage Findings
 
-1. Resolve scope (files + plans)
-2. Dispatch 3 Agent tool calls — ONE message, parallel
-3. Wait for all results
-4. Collect all findings from all agents
-5. Triage (main session): mark each finding as MUST FIX, FALSE POSITIVE, or DEFERRED (with reason)
-6. Create tasks from MUST FIX findings (see below)
-7. Append DEFERRED findings to `.ai/audit/<branch-name>/issues.md`
-8. Show audit summary
+Collect all findings from all 3 agents. Mark each as exactly one of:
 
-## Finding Policy
+| Category | When | Action |
+|----------|------|--------|
+| **MUST FIX** | Real issue, fix in this PR | Create task (Step 5) |
+| **FALSE POSITIVE** | Agent is wrong | Explain WHY it's wrong |
+| **DEFERRED** | Real issue, not this PR | Write to issues.md (Step 6) |
 
-<HARD-RULE>
-Every finding = MUST FIX, FALSE POSITIVE, or DEFERRED. No other categories.
+No other categories. Ever.
 
-**MUST FIX** — real issue, fix now in this PR.
-**FALSE POSITIVE** — agent is wrong, the issue doesn't exist. Explain WHY.
-**DEFERRED** — real issue, but not fixable in this PR scope. Requires ALL of:
-  - Concrete reason why not now (pre-existing, architectural change, separate feature)
-  - Source agent + finding ID
-  - Proposed fix (what to do when you address it later)
+**DEFERRED restrictions:**
+- Security, tenant isolation, data loss → always MUST FIX, never DEFERRED
+- "too hard" is NOT valid — break into steps
+- DEFERRED is NOT a trash bin — every item must have a real proposed fix
+- Every DEFERRED needs ALL of: source agent + finding ID, reason why not now, proposed fix
 
-DEFERRED restrictions:
-- Security, tenant isolation, data loss → **always MUST FIX**, never DEFERRED
-- "too hard" is NOT a valid reason for DEFERRED — break into steps
-- DEFERRED is NOT a trash bin — every deferred item must have a real proposed fix
+### Step 5: Create Tasks from MUST FIX
 
-DEFERRED findings go to `.ai/audit/<branch-name>/issues.md` for tracking after merge.
-</HARD-RULE>
-
-## Creating Tasks from Findings
-
-For each MUST FIX finding, create a task:
+For each MUST FIX finding:
 
 ```
 TaskCreate:
@@ -109,9 +101,9 @@ TaskCreate:
   activeForm: "Fixing [brief description]"
 ```
 
-Group related findings into single tasks where it makes sense (e.g. 3 Fletcher findings in same file = 1 task).
+Group related findings in same file into single task.
 
-## Writing Deferred Issues
+### Step 6: Write Deferred Issues
 
 For each DEFERRED finding, append a row to `.ai/audit/<branch-name>/issues.md`.
 
@@ -128,11 +120,9 @@ Deferred findings from pre-merge review — to verify after merge.
 
 Each DEFERRED finding adds a row with status `open`.
 
-`<branch-name>` = current git branch name with `/` replaced by `-` (e.g. `feature/foo` → `feature-foo`).
+`<branch-name>` = git branch with `/` → `-`.
 
-## Output
-
-### Audit Summary
+### Step 7: Show Summary
 
 ```
 AUDIT SUMMARY
@@ -154,43 +144,38 @@ Deferred (if any):
 - [agent]: [finding] — REASON why deferred + proposed fix
 ```
 
-### Feature Summary
-
-After audit, also present what was built:
+Then present feature summary:
 
 ```
 FEATURE SUMMARY
 ═══════════════
 What was built:
-- [bullet point summary of what the feature does]
+- [bullet point summary]
 - [key architectural decisions]
-- [key files created/modified]
 
 How it works:
 - [brief flow description]
 ```
 
-Build this from: feature file, plans, and scoped files. Read them if needed.
+Build from: feature file, plans, and scoped files.
 
 ## After Audit
 
 Tasks are created. User decides next step:
-
 1. **Fix manually** — work through tasks one by one
 2. **Run executing-plans** — batch execute tasks
 3. **Re-audit** — run `/audit` again after fixes to check for regressions
-
-Recommend running `/audit` again after fixing all tasks to verify no regressions.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
-| No feature file exists | Create with **rrz:feature-context** first |
+| Running git diff before reading feature file | Step 1 is READ FEATURE FILE. Always. |
+| Guessing base branch as `main` | Use `<base-branch>` from session context. If UNKNOWN → ASK. |
+| No feature file exists | Create with **rr:feature-context** first |
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |
 | Skipping findings as "pre-existing" | Use DEFERRED with proposed fix, not FALSE POSITIVE |
-| Inventing triage categories | ONLY 3 exist: MUST FIX, FALSE POSITIVE, DEFERRED. No "accepted", "duplicate", "low-risk", "suggestion", "nice-to-have" |
-| Running on wrong branch | Verify branch matches feature file `branch:` field |
+| Inventing triage categories | ONLY 3: MUST FIX, FALSE POSITIVE, DEFERRED |
 | Fixing inside audit | Audit ONLY reports and creates tasks. Fixing is separate. |
 
-**REQUIRES:** rrz:feature-context (for scope resolution)
+**REQUIRES:** rr:feature-context (for scope resolution)

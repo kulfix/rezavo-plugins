@@ -22,7 +22,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 Before writing any plan:
 1. Use `feature-context` skill to find the active feature file
 2. Read the feature file — understand status, existing plans, dependencies
-3. Verify `base_branch:` is set. If missing, determine from current branch context and add it.
+3. Verify `base_branch:` is set in feature file. If missing, use value from `<branch-context>` (session start) and add it.
 4. After saving the plan, update feature file frontmatter with new plan path
 
 ## Bite-Sized Task Granularity

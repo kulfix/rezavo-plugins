@@ -13,23 +13,16 @@ Final gate before PR: verify tests, take screenshots, run E2E, auto-create PR.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
-<HARD-RULE>
-NEVER use `main` as base for diffs or PRs without checking feature file first.
-Base branch comes from `.ai/features/<name>.md` frontmatter `base_branch:`.
-Chains like `main → feature/A → feature/B` are common — feature/B's base is feature/A, NOT main.
-Do NOT run `git log main..HEAD` or `git diff main...HEAD` before reading the feature file.
-</HARD-RULE>
-
 ## The Process
 
-### Step 0: Resolve Base Branch + Verify Gate (REQUIRED)
+### Step 0: Verify Gate (REQUIRED)
 
-1. Read feature file (`.ai/features/`) — extract `base_branch:` from frontmatter
-2. If not set → **ASK user.** Do NOT assume `main`.
-3. Check if `/pre-merge-review` was run (look for `.ai/audit/<branch-name>/summary.md`)
-4. If NOT — **STOP. Run `/pre-merge-review` first.**
+`<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN or missing → **ASK user.** Do NOT assume `main`.
 
-All subsequent steps use `<base-branch>` — this is the value from the feature file, not `main`.
+1. Check if `/pre-merge-review` was run (look for `.ai/audit/<branch-name>/summary.md`)
+2. If NOT — **STOP. Run `/pre-merge-review` first.**
+
+All subsequent steps use `<base-branch>` — NEVER hardcode `main`.
 
 ### Step 1: Update Feature File
 

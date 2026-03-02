@@ -35,20 +35,19 @@ git branch --show-current
 Read the file. Extract from frontmatter:
 - `files:` — review scope
 - `plans:` — spec for Javert
-- `base_branch:` — needed only if `files:` is empty
 
 If no feature file exists → **STOP.** Create one with `rr:feature-context` first.
 
 ### Step 2: Determine Scope
 
+`<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN → **ASK user.** Do NOT assume `main`.
+
 **If `files:` has entries → THAT IS THE SCOPE.** Do NOT run git diff. Do NOT expand scope. Go to Step 3.
 
 **If `files:` is empty/missing → fallback to diff:**
-1. Read `base_branch:` from frontmatter
-2. If no `base_branch:` → **ASK the user.** Do NOT assume `main`.
-3. `git diff $(git merge-base HEAD origin/$BASE)...HEAD --name-only`
-
-Feature branches can be chained (main → feature/A → feature/B). Wrong base = reviewing code you didn't write.
+```bash
+git diff $(git merge-base HEAD origin/<base-branch>)...HEAD --name-only
+```
 
 ### Step 3: Dispatch 3 Agents
 
@@ -172,7 +171,7 @@ Tasks are created. User decides next step:
 | Mistake | Fix |
 |---------|-----|
 | Running git diff before reading feature file | Step 1 is READ FEATURE FILE. Always. |
-| Guessing base branch as `main` | Read `base_branch:` from feature file. If missing → ASK. |
+| Guessing base branch as `main` | Use `<base-branch>` from session context. If UNKNOWN → ASK. |
 | No feature file exists | Create with **rr:feature-context** first |
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |
 | Skipping findings as "pre-existing" | Use DEFERRED with proposed fix, not FALSE POSITIVE |

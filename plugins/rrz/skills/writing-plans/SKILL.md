@@ -22,7 +22,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 Before writing any plan:
 1. Use `feature-context` skill to find the active feature file
 2. Read the feature file — understand status, existing plans, dependencies
-3. After saving the plan, update feature file frontmatter with new plan path
+3. Verify `base_branch:` is set in feature file. If missing, use value from `<branch-context>` (session start) and add it.
+4. After saving the plan, update feature file frontmatter with new plan path
 
 ## Bite-Sized Task Granularity
 
@@ -40,7 +41,7 @@ Before writing any plan:
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use rrz:executing-plans to implement this plan task-by-task.
+> **For Claude:** REQUIRED SUB-SKILL: Use rr:executing-plans to implement this plan task-by-task.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -109,6 +110,26 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
+## E2E Task Structure
+
+If design doc has Acceptance Scenarios → plan MUST include E2E task(s). Place AFTER implementation, BEFORE Gate. Use `rr:writing-tests` for Playwright patterns.
+
+````markdown
+### Task N: E2E Tests (SC-01, SC-02, SC-03)
+
+**Files:**
+- Create: `tests/e2e/features/<feature-name>.spec.ts`
+- Reference: `tests/e2e/fixtures/config.ts`
+
+**Scenarios from design:** SC-01 (atomic), SC-02 (atomic), SC-03 (journey)
+
+**Step 1: Write E2E spec** — one test per SC-XX, loginViaAPI in beforeEach
+
+**Step 2: Run:** `./cli.py e2e test features`
+
+**Step 3: Commit:** `git commit -m "test(e2e): add SC-01..SC-03 for <feature>"`
+````
+
 ## Remember
 - Load feature context FIRST (Step 0)
 - Exact file paths always
@@ -116,6 +137,7 @@ git commit -m "feat: add specific feature"
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
+- If design doc has Acceptance Scenarios → plan MUST include E2E task(s) after implementation, before Gate
 - Always end plan with Audit Gate task
 
 ## Execution Handoff
@@ -131,10 +153,10 @@ After saving the plan, offer execution choice:
 **Which approach?"**
 
 **If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use rrz:subagent-driven-development
+- **REQUIRED SUB-SKILL:** Use rr:subagent-driven-development
 - Stay in this session
 - Fresh subagent per task + code review
 
 **If Parallel Session chosen:**
 - Guide them to open new session in worktree
-- **REQUIRED SUB-SKILL:** New session uses rrz:executing-plans
+- **REQUIRED SUB-SKILL:** New session uses rr:executing-plans
