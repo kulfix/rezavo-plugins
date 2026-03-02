@@ -30,9 +30,52 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
+## Detect branch + base_branch from feature files
+branch_context=""
+if git rev-parse --git-dir &>/dev/null 2>&1; then
+    current_branch=$(git branch --show-current 2>/dev/null || echo "")
+    if [ -n "$current_branch" ] && [ -d ".ai/features" ]; then
+        feature_file=""
+        base_branch=""
+        feat_status=""
+
+        # Strategy 1: branch name → filename (feature/foo-bar → foo-bar.md)
+        branch_slug="${current_branch#feature/}"
+        if [ -f ".ai/features/${branch_slug}.md" ]; then
+            feature_file=".ai/features/${branch_slug}.md"
+        fi
+
+        # Strategy 2: grep branch: match, prefer file with base_branch set
+        if [ -z "$feature_file" ]; then
+            while IFS= read -r f; do
+                bb=$(grep "^base_branch:" "$f" 2>/dev/null | head -1 | sed 's/^base_branch: *//' | sed 's/ *$//' || true)
+                if [ -n "$bb" ] && [ "$bb" != "null" ]; then
+                    feature_file="$f"
+                    break
+                fi
+                # Keep first match as fallback
+                [ -z "$feature_file" ] && feature_file="$f"
+            done < <(grep -rl "^branch: ${current_branch}$" .ai/features/*.md 2>/dev/null || true)
+        fi
+
+        if [ -n "$feature_file" ]; then
+            base_branch=$(grep "^base_branch:" "$feature_file" 2>/dev/null | head -1 | sed 's/^base_branch: *//' | sed 's/ *$//' || true)
+            feat_status=$(grep "^status:" "$feature_file" 2>/dev/null | head -1 | sed 's/^status: *//' | sed 's/ *$//' || true)
+            if [ -n "$base_branch" ] && [ "$base_branch" != "null" ]; then
+                branch_context="<branch-context>\nBranch: ${current_branch}\nBase branch: ${base_branch}\nFeature file: ${feature_file}\nStatus: ${feat_status}\n\nUse base_branch (${base_branch}) for all git diff/log — NOT main (unless base_branch IS main).\n</branch-context>"
+            else
+                branch_context="<branch-context>\nBranch: ${current_branch}\nFeature file: ${feature_file}\nStatus: ${feat_status}\n\n⚠️ base_branch not set — ASK user before assuming main.\n</branch-context>"
+            fi
+        elif [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
+            branch_context="<branch-context>\nBranch: ${current_branch}\n⚠️ No feature file found in .ai/features/ for this branch.\n</branch-context>"
+        fi
+    fi
+fi
+
 using_rr_escaped=$(escape_for_json "$using_rr_content")
 warning_escaped=$(escape_for_json "$warning_message")
-session_context="<EXTREMELY_IMPORTANT>\nYou have rrz.\n\n**Below is the full content of your 'rrz:using-rrz' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_rr_escaped}\n\n${warning_escaped}\n</EXTREMELY_IMPORTANT>"
+branch_escaped=$(escape_for_json "$branch_context")
+session_context="<EXTREMELY_IMPORTANT>\nYou have rrz.\n\n**Below is the full content of your 'rrz:using-rrz' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_rr_escaped}\n\n${warning_escaped}\n</EXTREMELY_IMPORTANT>\n\n${branch_escaped}"
 
 # Output context injection as JSON.
 # Keep both shapes for compatibility:
