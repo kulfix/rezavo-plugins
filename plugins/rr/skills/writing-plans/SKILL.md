@@ -59,12 +59,13 @@ Before writing any plan:
 ```markdown
 ### Task N: Gate
 
-Run `/pre-merge-review` skill. This runs 2 audit rounds with fixes between them:
-Round 1-2: 3 auditors (Fletcher, Paranoik, Javert). R2 conditional.
-→ fix findings → commit → re-audit.
+1. Run `/pre-merge-review` skill. This runs 2 audit rounds with fixes between them:
+   Round 1-2: 3 auditors (Fletcher, Paranoik, Javert). R2 conditional.
+   → fix findings → commit → re-audit.
+   Reports saved to `.ai/audit/<branch-name>/`.
 
-Reports saved to `.ai/audit/round-{1,2}.md`.
-Final summary + user approval before PR.
+2. After pre-merge-review completes, invoke `rr:finishing-a-development-branch` → PR.
+   Do NOT stop between pre-merge-review and PR creation.
 ```
 
 ## Task Structure

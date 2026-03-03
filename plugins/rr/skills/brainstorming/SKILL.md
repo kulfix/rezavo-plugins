@@ -99,8 +99,14 @@ Then write design doc + feature file on the new branch and commit.
 
 **Exploring approaches:**
 - Propose 2-3 different approaches with trade-offs
-- Present options conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
+- **Educational context is REQUIRED** — each approach must explain:
+  - WHY this pattern exists (what problem in the industry created it)
+  - WHEN it shines vs when it's overkill (real-world scenarios)
+  - What architectural principle it leverages (e.g. SRP, CQRS, event sourcing)
+  - Trade-offs: what you gain vs what you pay (complexity, performance, maintainability)
+- The user should learn something new from reading the options — even if they already know which one to pick
+- Do NOT present code snippets at this stage — focus on concepts, mental models, and reasoning
 
 **Presenting the full design overview:**
 - Once approach is chosen, present the COMPLETE design as one cohesive document
