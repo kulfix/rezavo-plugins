@@ -7,9 +7,9 @@ description: >
 
 # Consolidate Audit Issues
 
-Scan `.ai/audit/` for branch issue files, merge into single dated `all-open-issues` file.
+Scan `.ai/audit/` for branch issue files, merge into single dated `all-open-issues` file. Assign to planned features. Move processed inputs to `done/`.
 
-**Core principle:** One source of truth for all deferred audit issues. Branch audit files are inputs, dated consolidated file is output.
+**Core principle:** One source of truth for all deferred audit issues. Every issue must land in a planned feature file. If no feature fits, create a thematic catch-all.
 
 ## Invocation
 
@@ -32,7 +32,7 @@ Read the latest one. Extract the `Sources:` section — these branches are alrea
 
 ### Step 2: Find Unprocessed Branches
 
-List all branch audit directories:
+List all branch audit directories (skip `done/`):
 
 ```bash
 ls -d .ai/audit/feature-*/
@@ -48,20 +48,56 @@ If no unprocessed branches → tell user and STOP.
 
 For each unprocessed branch, read `issues.md`. Extract rows from the markdown table.
 
-For the previous consolidation file (if exists), read all existing issues.
+For the previous consolidation file (if exists), carry forward unresolved issues.
 
-### Step 4: Assign to Planned Branches
+**Resolved issues** = issues assigned to branches that are now merged (check `.ai/features/done/`). Drop them from the new file.
 
-Read all feature files in `.ai/features/*.md` (skip `done/` subdirectory).
+### Step 4: Assign to Planned Features
 
-For each new issue, assign to a planned branch based on:
+Read all feature files in `.ai/features/*.md` (skip `done/` subdirectory). These are the available targets.
+
+For each new issue, assign to a planned feature based on:
 - **File path** — which domain does the file belong to?
 - **Issue type** — security/auth → auth-cleanup, calls/analysis → calls-cleanup, offers → offer-hardening
 - **Existing assignments** — follow patterns from previous consolidation
+- **`audit_issues:` in feature frontmatter** — check if the issue's original number is already listed
 
-Mark unassignable issues as `nieprzypisane`.
+### Step 5: Handle Unassignable Issues
 
-### Step 5: Write Consolidated File
+If issues don't fit any existing planned feature:
+
+1. **Group by theme** — find common thread (e.g., "CI/infra", "test hardening", "E2E improvements")
+2. **Check if a catch-all feature already exists** for that theme
+3. **If not — create 1-2 thematic feature files** in `.ai/features/`:
+
+```yaml
+---
+status: planned
+branch: null
+base_branch: feature/multi-tenant-foundation
+plans: []
+files: []
+audit_issues: []
+---
+
+# Theme Name
+
+## Co to jest
+Catch-all for [theme] issues discovered during audits.
+
+## Issues
+[table of assigned issues]
+```
+
+Keep the number of catch-all features minimal (1-2 max). Prefer assigning to existing features.
+
+**Zero `nieprzypisane` at the end.** Every issue must have a home.
+
+### Step 6: Update Feature Files
+
+For each planned feature that received new issues, update its `audit_issues:` list in frontmatter to include the new issue IDs.
+
+### Step 7: Write Consolidated File
 
 Create `.ai/audit/YYYY-MM-DD-open-issues.md` with today's date.
 
@@ -73,36 +109,42 @@ Format:
 > Skonsolidowane YYYY-MM-DD.
 >
 > **Źródła:**
-> - `YYYY-MM-DD-open-issues.md` — N issues (previous consolidation)
-> - `.ai/audit/<branch-1>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
-> - `.ai/audit/<branch-2>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
+> - `done/YYYY-MM-DD-open-issues.md` — N issues (previous consolidation)
+> - `done/<branch-1>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
+> - `done/<branch-2>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
 
 ---
 
-## Przypisanie do planned branchy
+## Przypisanie do planned features
 
-| Branch | Issues (stare) | Issues (nowe) |
-|--------|---------------|---------------|
-| **branch-name** | #1,2,3 (N) | ID-1,ID-2 |
+| Feature | Issues (stare) | Issues (nowe) | Total |
+|---------|---------------|---------------|:-----:|
+| **feature-name** | #1,2,3 | ID-1,ID-2 | N |
 
 ---
 
-## Stare issues (z poprzedniej konsolidacji)
+## Grupowanie tematyczne
 
-> Pełna lista z opisami: patrz `YYYY-MM-DD-open-issues.md`.
-> Poniżej tylko numery i przypisania — opisy się nie zmieniły.
+### A. Theme Name (N issues)
 
-N issues, przypisane jak wyżej.
+| ID | Severity | Plik | Problem | Feature |
+|----|----------|------|---------|---------|
+| X | high | file.py | description | target-feature |
+
+**Propozycja:** [how to address this group]
+
+### B. Theme Name (N issues)
+...
 
 ---
 
 ## Nowe issues — <branch-name> (PR #X)
 
-Źródło: `.ai/audit/<branch-dir>/issues.md`
+Źródło: `done/<branch-dir>/issues.md`
 
-| ID | Round | Agent | Severity | Plik | Opis | Przypisanie |
-|----|-------|-------|----------|------|------|-------------|
-| PREFIX-1 | R1 | Agent | severity | file | description | planned-branch |
+| ID | Round | Agent | Severity | Plik | Opis | Feature |
+|----|-------|-------|----------|------|------|---------|
+| PREFIX-1 | R1 | Agent | severity | file | description | target-feature |
 
 ---
 
@@ -117,7 +159,29 @@ N issues, przypisane jak wyżej.
 
 **Issue ID convention:** `PREFIX-N` where PREFIX = branch abbreviation (e.g., RLS, REL, GRD).
 
-### Step 6: Verify Merge PR Numbers
+### Step 8: Move Processed to done/
+
+```bash
+mkdir -p .ai/audit/done
+```
+
+Move **all inputs** that were consumed:
+
+1. **Previous consolidation file** → `done/`
+2. **Processed branch directories** → `done/`
+
+```bash
+mv .ai/audit/YYYY-MM-DD-open-issues.md .ai/audit/done/
+mv .ai/audit/feature-branch-1/ .ai/audit/done/
+mv .ai/audit/feature-branch-2/ .ai/audit/done/
+```
+
+After this step, `.ai/audit/` contains ONLY:
+- The new `YYYY-MM-DD-open-issues.md` (current)
+- `done/` directory (archive)
+- Unprocessed branches (if any remain)
+
+### Step 9: Verify Merge PR Numbers
 
 For each new branch, find the merged PR number:
 
@@ -127,15 +191,29 @@ gh pr list --state merged --search "<branch-name>" --json number,mergedAt
 
 Include PR number and merge date in the sources section.
 
-### Step 7: Report
+### Step 10: Present Report to User
+
+Group issues by theme and present with actionable proposals:
 
 ```
 CONSOLIDATION COMPLETE
 ══════════════════════
-Previous: YYYY-MM-DD-open-issues.md (N issues)
-New branches processed: X
+Previous: YYYY-MM-DD-open-issues.md (N issues) → done/
+Branches processed: X → done/
 New issues added: Y
-Total: Z issues
+Resolved (merged branches): Z dropped
+Total open: N issues
+
+ASSIGNMENT
+──────────
+feature-1: N issues (M new)
+feature-2: N issues (M new)
+[new-catch-all]: N issues (created)
+
+THEMES + PROPOSALS
+──────────────────
+A. [Theme]: N issues → [proposal]
+B. [Theme]: N issues → [proposal]
 
 Output: .ai/audit/YYYY-MM-DD-open-issues.md
 ```
@@ -144,11 +222,14 @@ Output: .ai/audit/YYYY-MM-DD-open-issues.md
 
 | Mistake | Fix |
 |---------|-----|
+| Leaving issues as `nieprzypisane` | Every issue must land in a feature — create catch-all if needed |
+| Creating too many catch-all features | Max 1-2 thematic catch-alls. Prefer existing features. |
 | Reprocessing already-consolidated branches | Check Sources section in previous file |
-| Missing PR numbers | Use `gh pr list --state merged` to find them |
-| Overwriting previous consolidation | Create NEW dated file, don't overwrite old one |
-| Copying full descriptions from old file | Reference old file, only include new issues in full |
-| Forgetting assignment to planned branches | Every issue must have `Przypisanie` — use `nieprzypisane` as fallback |
+| Not moving processed files to done/ | Step 8 is mandatory — inputs always go to done/ |
+| Keeping resolved issues from merged branches | Drop issues assigned to branches now in `.ai/features/done/` |
+| Not updating feature file `audit_issues:` | Step 6 — feature files must list their assigned issues |
+| Presenting issues without thematic grouping | Step 10 — group by theme with actionable proposals |
 
 **READS:** `.ai/audit/*/issues.md`, `.ai/features/*.md`
-**WRITES:** `.ai/audit/YYYY-MM-DD-open-issues.md`
+**WRITES:** `.ai/audit/YYYY-MM-DD-open-issues.md`, `.ai/features/*.md` (audit_issues update)
+**MOVES:** processed inputs → `.ai/audit/done/`
