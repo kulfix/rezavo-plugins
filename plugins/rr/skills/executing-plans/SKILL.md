@@ -27,19 +27,19 @@ Before anything else:
 Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of what passes/fails before you touch code.
 
 ```bash
-# Backend tests (rebuild to avoid stale containers)
-./cli.py test up
+# Backend tests — ALWAYS --build to avoid stale code in containers
+./cli.py test up --build
 mkdir -p .ai/test-results/<branch-name>
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
 ./cli.py test down
 
-# E2E tests
-./cli.py e2e up
+# E2E tests — ALWAYS --build (same reason)
+./cli.py e2e up --build
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
 ./cli.py e2e down
 
-# Resume backend Docker for task execution
-./cli.py test up --no-build
+# Resume backend Docker for task execution (no rebuild needed — image is fresh)
+./cli.py test up
 ```
 
 Parse pytest/playwright summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
