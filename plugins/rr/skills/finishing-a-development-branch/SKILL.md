@@ -31,16 +31,12 @@ Use `feature-context` skill: set `status: done`, verify all plan items reflected
 ### Step 2: Start Docker Environment
 
 ```bash
-./cli.py e2e up --build    # ALWAYS --build to avoid stale code in containers
+./cli.py e2e up    # builds + starts backend, frontend, postgres, redis
 ```
 
 Verify containers healthy before proceeding. Keep running through Steps 3-5.
 
 `e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Step 3).
-
-<HARD-RULE>
-ALWAYS use `--build` when starting Docker for tests. Without it, containers run stale code from previous builds. This causes false test failures that waste hours debugging.
-</HARD-RULE>
 
 ### Step 3: Visual Verification (AUTOMATIC)
 
