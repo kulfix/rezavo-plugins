@@ -154,7 +154,25 @@ Evidence: .ai/test-results/<branch>/baseline.log
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-### Step 8: Cleanup
+### Step 8: Monitor GH Actions
+
+After PR is created, CI must pass — not just local tests.
+
+1. Spawn `rr:workflow-monitor` agent to wait for PR checks
+2. **PASSED** → proceed to Step 9
+3. **FAILED** → spawn `rr:workflow-fixer` agent with error logs → fix → commit → push → back to monitor
+
+```
+FIX LOOP:
+1. workflow-monitor reports failure + error logs
+2. workflow-fixer reads logs, fixes code, verifies locally, commits
+3. git push (triggers new CI run)
+4. workflow-monitor waits for new run
+5. Still failing? → back to 2
+6. Passed? → Step 9
+```
+
+### Step 9: Cleanup
 
 Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first.
 
@@ -171,10 +189,12 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 | "0 new failures" (no baseline) | No baseline means everything passed before. Any failure = new. |
 | "Let me ask what to do" | This is automatic. Fix → retest → loop → PR. |
 | "Create PR with warnings" | NO. Fix first. PR only when clean. |
+| "GH Actions will pass, skip monitoring" | Local passing ≠ CI passing. Monitor. Always. |
+| "CI failure is flaky, ignore it" | Re-run once. Still failing = real issue. Fix it. |
 
 ## Integration
 
 **Called by:** `subagent-driven-development`, `executing-plans` — after pre-merge-review
 **Requires:** `pre-merge-review` completed (Step 0), `feature-context` (Step 1)
-**Uses:** `visual-verification` (Step 3, automatic), `rr:workflow-monitor` (optional, E2E)
+**Uses:** `visual-verification` (Step 3, automatic), `rr:workflow-monitor` (Step 8), `rr:workflow-fixer` (Step 8, on failure)
 **Reads:** `.ai/test-results/<branch>/baseline-failures.txt` from executor skills

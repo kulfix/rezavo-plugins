@@ -29,8 +29,9 @@ You MUST create a task for each of these items and complete them in order:
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present full design overview** — complete picture with every element rated 1-10 (confidence/clarity), MUST include Acceptance Scenarios (Given/When/Then) or explicit N/A
 6. **Refine weak elements** — anything rated below 7 gets discussed until raised or consciously accepted
-7. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
-8. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+7. **Aim analysis (automatic)** — after all elements >= 7, automatically run `/aim 10` then `/aim 15`. User decides scope adjustments before approval.
+8. **Create feature branch + write docs** — create `feature/<name>` branch from current branch, save design to `docs/plans/YYYY-MM-DD-<topic>-design.md`, create `.ai/features/<name>.md` with `status: planned`, plan path, and `branch:` field, commit both
+9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
@@ -43,7 +44,8 @@ digraph brainstorming {
     "Present full design overview\n(each element rated 1-10)" [shape=box style=filled fillcolor=lightyellow];
     "All elements >= 7?" [shape=diamond];
     "Refine weak elements" [shape=box];
-    "User approves full design?" [shape=diamond];
+    "Aim analysis\n(10/10 gaps + 15/10 moonshot)" [shape=box style=filled fillcolor=lightcyan];
+    "User decides scope\nadjustments + approves" [shape=diamond];
     "Create feature branch from current" [shape=box];
     "Write design doc + feature file" [shape=box];
     "Invoke writing-plans skill" [shape=doublecircle];
@@ -53,11 +55,12 @@ digraph brainstorming {
     "Ask clarifying questions" -> "Propose 2-3 approaches";
     "Propose 2-3 approaches" -> "Present full design overview\n(each element rated 1-10)";
     "Present full design overview\n(each element rated 1-10)" -> "All elements >= 7?";
-    "All elements >= 7?" -> "User approves full design?" [label="yes"];
+    "All elements >= 7?" -> "Aim analysis\n(10/10 gaps + 15/10 moonshot)" [label="yes"];
     "All elements >= 7?" -> "Refine weak elements" [label="no"];
     "Refine weak elements" -> "Present full design overview\n(each element rated 1-10)";
-    "User approves full design?" -> "Present full design overview\n(each element rated 1-10)" [label="no, revise"];
-    "User approves full design?" -> "Create feature branch from current" [label="yes"];
+    "Aim analysis\n(10/10 gaps + 15/10 moonshot)" -> "User decides scope\nadjustments + approves";
+    "User decides scope\nadjustments + approves" -> "Present full design overview\n(each element rated 1-10)" [label="revise scope"];
+    "User decides scope\nadjustments + approves" -> "Create feature branch from current" [label="approved"];
     "Create feature branch from current" -> "Write design doc + feature file";
     "Write design doc + feature file" -> "Invoke writing-plans skill";
 }
