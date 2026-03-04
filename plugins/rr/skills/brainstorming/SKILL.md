@@ -127,11 +127,13 @@ DESIGN OVERVIEW
 | 4 | Error handling | Pre-send validation | 7/10 | Edge cases TBD |
 | 5 | Testing approach | Unit + integration | 7/10 | Factories, markers |
 | 6 | Acceptance Scenarios | Given/When/Then E2E scenarios | 8/10 | SC-01..SC-03 |
+| 7 | Operational Changes | Post-deploy ops files needed? | 9/10 | enable_jobs after deploy |
 ```
 
 - **Rating meaning:** 1 = no idea how, 5 = rough sketch, 7 = solid plan, 10 = trivial/proven
 - **Anything below 7** must be discussed and either raised or consciously accepted with rationale
 - **Acceptance Scenarios is MANDATORY.** Empty = rating 0/10. For backend-only features (CLI, Celery, migration): use `N/A` with justification.
+- **Operational Changes is MANDATORY.** Does this feature need post-deploy actions? (enable/disable jobs, seed settings, run SQL, change configuration). If YES — describe what ops files are needed. If NO — use `N/A: no post-deploy configuration changes required` with justification.
 - User sees the full picture BEFORE approving — no section-by-section drip
 - After user reviews ratings, refine weak elements together
 - Re-present updated overview until user approves the whole

@@ -111,6 +111,51 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
+## Ops Task Structure
+
+If design doc has Operational Changes (not N/A) → plan MUST include ops task(s). Place AFTER implementation, BEFORE E2E/Gate.
+
+````markdown
+### Task N: System Operation — [description]
+
+**Files:**
+- Create: `ops/versions/YYYYMMDD_NNN_slug.py`
+
+**Step 1: Generate ops file**
+
+```bash
+./cli.py ops create "description of what this operation does"
+```
+
+**Step 2: Implement apply()**
+
+```python
+def apply():
+    from ops.helpers import enable_jobs, disable_jobs, set_settings, run_sql
+    enable_jobs(['job-name'], all_tenants=True)
+```
+
+Available helpers: `enable_jobs()`, `disable_jobs()`, `set_settings()`, `run_sql()`.
+Each accepts `tenant_id=N` (single tenant) or `all_tenants=True`.
+
+**Step 3: Implement rollback() (optional)**
+
+Only if the operation is reversible. Skip for fire-and-forget ops.
+
+**Step 4: Verify**
+
+```bash
+./cli.py ops status  # should show new operation as Pending
+```
+
+**Step 5: Commit**
+
+```bash
+git add ops/versions/YYYYMMDD_NNN_slug.py
+git commit -m "ops: description"
+```
+````
+
 ## E2E Task Structure
 
 If design doc has Acceptance Scenarios → plan MUST include E2E task(s). Place AFTER implementation, BEFORE Gate. Use `rr:writing-tests` for Playwright patterns.
@@ -138,6 +183,7 @@ If design doc has Acceptance Scenarios → plan MUST include E2E task(s). Place 
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
+- If design doc has Operational Changes (not N/A) → plan MUST include ops task(s) after implementation, before E2E/Gate
 - If design doc has Acceptance Scenarios → plan MUST include E2E task(s) after implementation, before Gate
 - Always end plan with Audit Gate task
 
