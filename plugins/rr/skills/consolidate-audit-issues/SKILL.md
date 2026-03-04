@@ -176,47 +176,44 @@ mv .ai/audit/feature-branch-1/ .ai/audit/done/
 mv .ai/audit/feature-branch-2/ .ai/audit/done/
 ```
 
+### Step 9: Move Output to done/
+
+The consolidated file is also an intermediate artifact — issues now live in feature files. Move it too:
+
+```bash
+mv .ai/audit/YYYY-MM-DD-open-issues.md .ai/audit/done/
+```
+
 After this step, `.ai/audit/` contains ONLY:
-- The new `YYYY-MM-DD-open-issues.md` (current)
 - `done/` directory (archive)
 - Unprocessed branches (if any remain)
 
-### Step 9: Verify Merge PR Numbers
+The **source of truth** for open issues is `.ai/features/*.md` (`audit_issues:` in frontmatter), NOT the audit directory.
 
-For each new branch, find the merged PR number:
+### Step 10: Present Triage to User
 
-```bash
-gh pr list --state merged --search "<branch-name>" --json number,mergedAt
-```
-
-Include PR number and merge date in the sources section.
-
-### Step 10: Present Report to User
+**This is where you STOP and involve the user.** Present grouped issues with proposals and wait for approval before updating feature files.
 
 Group issues by theme and present with actionable proposals:
 
 ```
-CONSOLIDATION COMPLETE
-══════════════════════
-Previous: YYYY-MM-DD-open-issues.md (N issues) → done/
-Branches processed: X → done/
-New issues added: Y
-Resolved (merged branches): Z dropped
-Total open: N issues
+TRIAGE — N new issues from X branches
+══════════════════════════════════════
 
-ASSIGNMENT
-──────────
-feature-1: N issues (M new)
-feature-2: N issues (M new)
-[new-catch-all]: N issues (created)
+A. [Theme] (N issues)
+   ID | Severity | File | Problem
+   → Proposal: [which feature + why]
 
-THEMES + PROPOSALS
-──────────────────
-A. [Theme]: N issues → [proposal]
-B. [Theme]: N issues → [proposal]
+B. [Theme] (N issues)
+   ...
 
-Output: .ai/audit/YYYY-MM-DD-open-issues.md
+Unassignable (N issues):
+   → Proposal: create catch-all "misc-cleanup" or similar
+
+Approve assignments? [user confirms or adjusts]
 ```
+
+Only after user approval: update feature files (Step 6) and move to done (Steps 8-9).
 
 ## Common Mistakes
 
@@ -229,7 +226,9 @@ Output: .ai/audit/YYYY-MM-DD-open-issues.md
 | Keeping resolved issues from merged branches | Drop issues assigned to branches now in `.ai/features/done/` |
 | Not updating feature file `audit_issues:` | Step 6 — feature files must list their assigned issues |
 | Presenting issues without thematic grouping | Step 10 — group by theme with actionable proposals |
+| Updating feature files before user approves | Step 10 first — present triage, wait for approval |
+| Leaving consolidated file in .ai/audit/ | Step 9 — it's intermediate, move to done/ after processing |
 
 **READS:** `.ai/audit/*/issues.md`, `.ai/features/*.md`
-**WRITES:** `.ai/audit/YYYY-MM-DD-open-issues.md`, `.ai/features/*.md` (audit_issues update)
-**MOVES:** processed inputs → `.ai/audit/done/`
+**WRITES:** `.ai/audit/YYYY-MM-DD-open-issues.md` (intermediate), `.ai/features/*.md` (audit_issues update)
+**MOVES:** everything → `.ai/audit/done/` (source of truth = feature files)
