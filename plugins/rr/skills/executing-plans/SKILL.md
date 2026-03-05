@@ -31,9 +31,9 @@ Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of wha
 ./cli.py test up
 mkdir -p .ai/test-results/<branch-name>
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
-./cli.py test down
+./cli.py test down   # REQUIRED: clears shared postgres/redis volumes
 
-# E2E tests
+# E2E tests (MUST run after test down — shared docker-compose.test.yml)
 ./cli.py e2e up
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
 ./cli.py e2e down
@@ -51,6 +51,28 @@ Parse pytest/playwright summaries. Extract failed test names to `baseline-failur
 4. If no concerns: Create TodoWrite and proceed
 
 ### Step 3: Execute ALL Tasks via Subagents
+
+<HARD-RULE>
+NEVER do task work in the main context. ALWAYS dispatch as Agent subagent.
+
+Main context ONLY:
+- Read plan file (once, in Step 2)
+- Dispatch Agent subagent per task
+- Read subagent result (returned text, not files)
+- Update TodoList status
+- Update feature file `files:` field
+- Run git commit
+
+FORBIDDEN in main context:
+- Read implementation files (app/, frontend/, tests/)
+- Edit any file
+- Run tests or builds
+- Debug failures
+- Analyze test output
+
+If subagent failed → dispatch fix subagent with error context.
+If verification needed → dispatch verify subagent.
+</HARD-RULE>
 
 Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
 The plan is already written — subagent implements, you orchestrate.
@@ -145,6 +167,18 @@ Do NOT stop for:
 - Asking "should I continue?" (yes, always continue)
 - Reporting what you just did (report at the end)
 
+## Red Flags — STOP
+
+| Thought | Reality |
+|---------|---------|
+| "Let me read X to understand first" | Subagent will read it. You dispatch. |
+| "Let me check the test results" | Subagent reports results. Trust or dispatch verify subagent. |
+| "This task is too small for a subagent" | Subagent startup < context pollution. Always delegate. |
+| "Let me quickly fix this myself" | Context pollution. Dispatch fix subagent. |
+| "Let me refresh my memory on the plan" | You read the plan once in Step 2. Don't re-read. |
+
+**All of these mean: You are doing subagent work in main context. STOP. Dispatch.**
+
 ## Remember
 - Load feature context FIRST (Step 0)
 - Run baseline tests (Step 1) — evidence before implementation
@@ -155,6 +189,7 @@ Do NOT stop for:
 - Stop ONLY when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
 - After last task: finish feature file (Step 4) → /pre-merge-review → PR (Step 5)
+- Main context = orchestrator ONLY. All implementation via subagents.
 
 ## Integration
 

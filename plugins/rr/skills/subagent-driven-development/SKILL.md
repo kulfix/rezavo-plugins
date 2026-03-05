@@ -53,9 +53,9 @@ Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of wha
 ./cli.py test up
 mkdir -p .ai/test-results/<branch-name>
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
-./cli.py test down
+./cli.py test down   # REQUIRED: clears shared postgres/redis volumes
 
-# E2E tests
+# E2E tests (MUST run after test down — shared docker-compose.test.yml)
 ./cli.py e2e up
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
 ./cli.py e2e down
@@ -65,6 +65,29 @@ mkdir -p .ai/test-results/<branch-name>
 ```
 
 Parse pytest/playwright summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
+
+<HARD-RULE>
+NEVER do task work in the main context. ALWAYS dispatch as Agent subagent.
+
+Main context ONLY:
+- Read plan file (once, at start)
+- Dispatch Agent subagent per task
+- Read subagent result (returned text, not files)
+- Answer subagent questions
+- Update TodoList status
+- Update feature file `files:` field
+- Run git commit
+
+FORBIDDEN in main context:
+- Read implementation files (app/, frontend/, tests/)
+- Edit any file
+- Run tests or builds
+- Debug failures
+- Analyze test output
+
+If subagent failed → dispatch fix subagent with error context.
+If verification needed → dispatch verify subagent.
+</HARD-RULE>
 
 ### Execution Flow
 
@@ -171,7 +194,18 @@ Done!
 - `/pre-merge-review` runs 2 audit rounds (3 auditors, R2 conditional), fixes between rounds
 - PR creation provides final integration checkpoint
 
-## Red Flags
+## Red Flags — STOP
+
+| Thought | Reality |
+|---------|---------|
+| "Let me read X to understand first" | Subagent will read it. You dispatch. |
+| "Let me check the test results" | Subagent reports results. Trust or dispatch verify subagent. |
+| "This task is too small for a subagent" | Subagent startup < context pollution. Always delegate. |
+| "Let me quickly fix this myself" | Context pollution. Dispatch fix subagent. |
+| "Let me refresh my memory on the plan" | You read the plan once at start. Don't re-read. |
+| "Let me verify what subagent did" | Read returned text. Don't read implementation files. |
+
+**All of these mean: You are doing subagent work in main context. STOP. Dispatch.**
 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
@@ -181,6 +215,7 @@ Done!
 - Ignore subagent questions (answer before letting them proceed)
 - Skip `/pre-merge-review` at the end — it's the primary quality pre-merge-review
 - Create PR without passing pre-merge-review
+- Do work in main context instead of dispatching (even "just this one thing")
 
 **If subagent asks questions:**
 - Answer clearly and completely

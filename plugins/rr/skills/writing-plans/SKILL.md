@@ -68,6 +68,24 @@ Before writing any plan:
    Do NOT stop between pre-merge-review and PR creation.
 ```
 
+## Task Self-Containment (CRITICAL)
+
+<HARD-RULE>
+Each task is a prompt for a subagent that has NEVER seen any other task in this plan.
+
+REQUIRED per task:
+- All file paths (no "same file as above")
+- Complete code snippets (no "analogicznie do Task 2")
+- Expected test output
+- Any context from previous tasks (e.g. "Task 2 created model X in app/models/x.py")
+- Verification command with expected result
+
+FORBIDDEN:
+- "Same as Task N" / "analogicznie" / "like above"
+- References to other tasks without reproducing the relevant context
+- Partial code ("add validation here")
+</HARD-RULE>
+
 ## Task Structure
 
 ````markdown
@@ -181,7 +199,7 @@ If design doc has Acceptance Scenarios → plan MUST include E2E task(s). Place 
 - Exact file paths always
 - Complete code in plan (not "add validation")
 - Exact commands with expected output
-- Reference relevant skills with @ syntax
+- Reference skills by name (e.g. "Use rr:test-driven-development"), NOT with @ file paths
 - DRY, YAGNI, TDD, frequent commits
 - If design doc has Operational Changes (not N/A) → plan MUST include ops task(s) after implementation, before E2E/Gate
 - If design doc has Acceptance Scenarios → plan MUST include E2E task(s) after implementation, before Gate
@@ -193,9 +211,10 @@ After saving the plan, offer execution choice:
 
 **"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
 
-**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
+**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, fast iteration.
+Note: Writing this plan consumed context for codebase research. For large plans (5+ tasks), Parallel Session gives subagents more room.
 
-**2. Parallel Session (separate)** - Open new session with executing-plans, batch execution with checkpoints
+**2. Parallel Session (separate)** - Open new session with executing-plans, batch execution with fresh context
 
 **Which approach?"**
 

@@ -82,6 +82,20 @@ When multiple skills could apply, use this order:
 "Let's build X" → brainstorming first, then implementation skills.
 "Fix this bug" → debugging first, then domain-specific skills.
 
+## Development Workflow (mandatory order)
+
+```
+brainstorming → writing-plans → executing/subagent → pre-merge-review → finishing-branch → PR
+```
+
+1. **brainstorming** — explore intent, requirements, design
+2. **writing-plans** — create implementation plan from design
+3. **executing-plans** OR **subagent-driven-development** — execute tasks via subagents
+4. **pre-merge-review** — 2-round audit (Fletcher + Paranoik + Javert)
+5. **finishing-a-development-branch** — final tests + visual + E2E + auto-PR
+
+Steps 4-5 MANDATORY. Never skip. Never create PR without both.
+
 ## Skill Types
 
 **Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
