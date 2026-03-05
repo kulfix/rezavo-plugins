@@ -2,12 +2,13 @@
 name: consolidate-audit-issues
 description: >
   Use when audit issues from multiple branches need consolidation into a single tracking file,
-  after merging feature branches, or when .ai/audit/ has unprocessed branch directories
+  after merging feature branches, when .ai/audit/ has unprocessed branch directories,
+  or when .ai/issues/ has open spotted issues (SPOT-XXX) that need assignment to features
 ---
 
 # Consolidate Audit Issues
 
-Scan `.ai/audit/` for branch issue files, triage with user, assign to planned features, archive inputs.
+Scan `.ai/audit/` for branch issue files AND `.ai/issues/` for open spotted issues (SPOT-XXX), triage with user, assign to planned features, archive/update status.
 
 **Core principle:** Every deferred audit issue must land in a planned feature file. Source of truth = `.ai/features/*.md` (`audit_issues:` in frontmatter). The audit directory is just a processing pipeline.
 
@@ -20,26 +21,36 @@ Scan `.ai/audit/` for branch issue files, triage with user, assign to planned fe
 
 ## The Process
 
-### Step 1: Find Unprocessed Branches
+### Step 1: Find Unprocessed Sources
 
-List branch audit directories (skip `done/`):
+**Two input sources:**
 
+**A) Audit branches** — `.ai/audit/feature-*/issues.md`
 ```bash
 ls -d .ai/audit/feature-*/
 ```
+Skip branches already in `done/`. Check `done/` consolidation `Sources:` section.
 
-For each, check if `issues.md` exists. If previous consolidation exists in `done/`, check its `Sources:` section — skip already-processed branches.
+**B) Spotted issues** — `.ai/issues/SPOT-*.md`
+```bash
+ls .ai/issues/SPOT-*.md
+```
+Read `INDEX.md` — include only rows with status `open`.
 
-If no unprocessed branches → tell user and STOP.
+If no unprocessed branches AND no open spotted issues → tell user and STOP.
 
 ### Step 2: Read Issue Files + Find PR Numbers
 
-For each unprocessed branch:
+**For audit branches:**
 1. Read `issues.md` — extract rows from markdown table
 2. Find merged PR number:
 ```bash
 gh pr list --state merged --search "<branch-name>" --json number,mergedAt
 ```
+
+**For spotted issues:**
+1. Read each open `SPOT-XXX.md` — extract severity, type, effort, root cause, proposed fix
+2. No PR needed — these are discovered bugs, not audit deferrals
 
 ### Step 3: Read Planned Features
 
@@ -47,14 +58,14 @@ Read all feature files in `.ai/features/*.md` (skip `done/`). These are assignme
 
 ### Step 4: Present Triage to User
 
-**STOP here and involve the user.** Group new issues by theme and present with assignment proposals:
+**STOP here and involve the user.** Group all issues (audit + spotted) by theme and present with assignment proposals:
 
 ```
-TRIAGE — N new issues from X branches
-══════════════════════════════════════
+TRIAGE — N issues (X from audits, Y spotted)
+══════════════════════════════════════════════
 
 A. [Theme] (N issues)
-   ID | Severity | File | Problem
+   ID | Source | Severity | File | Problem
    → Proposal: assign to [feature] — [why]
 
 B. [Theme] (N issues)
@@ -65,6 +76,8 @@ Unassignable (N issues):
 
 Approve assignments?
 ```
+
+Source column: `audit/<branch>` or `SPOT-XXX`.
 
 Assignment heuristics:
 - **File path** — which domain? auth/users, calls/analysis, offers
@@ -98,9 +111,16 @@ Catch-all for [theme] issues discovered during audits.
 
 Max 1-2 catch-alls. Zero `nieprzypisane` at the end.
 
-### Step 6: Update Feature Files
+### Step 6: Update Feature Files + Spotted Issue Status
 
-For each feature that received new issues, update `audit_issues:` in frontmatter.
+**Feature files:** For each feature that received new issues, update `audit_issues:` in frontmatter.
+
+**Spotted issues:** For each assigned SPOT-XXX issue:
+1. Update status in `SPOT-XXX.md` header table: `open` → `assigned`
+2. Add `Assigned to: feature-name` row to the header table
+3. Update status in `INDEX.md` row: `open` → `assigned`
+
+SPOT issue files stay in `.ai/issues/` (they are permanent records, not pipeline artifacts). Only their status changes.
 
 ### Step 7: Write Consolidated File + Archive
 
@@ -142,6 +162,7 @@ Archive: .ai/audit/done/YYYY-MM-DD-open-issues.md
 > **Źródła:**
 > - `done/<branch-1>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
 > - `done/<branch-2>/issues.md` — N issues (PR #X, merged YYYY-MM-DD)
+> - `.ai/issues/` — N spotted issues (SPOT-XXX)
 
 ## Przypisanie do planned features
 
@@ -171,6 +192,6 @@ Archive: .ai/audit/done/YYYY-MM-DD-open-issues.md
 | Reprocessing already-consolidated branches | Check `done/` for previous consolidation sources |
 | Not updating feature file `audit_issues:` | Step 6 — feature files ARE the source of truth |
 
-**READS:** `.ai/audit/*/issues.md`, `.ai/features/*.md`
-**WRITES:** `.ai/audit/done/YYYY-MM-DD-open-issues.md` (archive), `.ai/features/*.md` (audit_issues)
-**MOVES:** processed branches → `.ai/audit/done/`
+**READS:** `.ai/audit/*/issues.md`, `.ai/issues/INDEX.md`, `.ai/issues/SPOT-*.md`, `.ai/features/*.md`
+**WRITES:** `.ai/audit/done/YYYY-MM-DD-open-issues.md` (archive), `.ai/features/*.md` (audit_issues), `.ai/issues/SPOT-*.md` (status), `.ai/issues/INDEX.md` (status)
+**MOVES:** processed audit branches → `.ai/audit/done/`
