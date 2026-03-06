@@ -8,11 +8,11 @@ description: >
 
 # Docs Review
 
-Analyze what was built on the current branch and suggest documentation updates.
+Analyze what was built on the current branch and update documentation automatically.
 
-**Core principle:** Don't force docs. Only suggest additions where a future developer
-would be confused without them. Keep docs minimal, practical, and aligned with existing
-kb style.
+**Core principle:** Don't force docs. Only update where a future developer would be
+confused without them. Keep docs minimal, practical, and aligned with existing kb style.
+Fix stale docs and fill gaps autonomously — don't ask, just do it.
 
 ## When to Run
 
@@ -71,41 +71,47 @@ Scan for new patterns that have NO kb coverage:
 - One-off implementations
 - Internal implementation details
 
-### Task 4: Present Report
+### Task 4: Fix Stale Docs
+
+<HARD-RULE>
+Do NOT ask user "shall I update?". Just update the files.
+If a doc is stale or has gaps — fix it. Commit the changes.
+The only reason to skip is if the gap doesn't meet the criteria from Task 3.
+</HARD-RULE>
+
+For each stale section or gap found:
+1. Edit the kb file directly — fix paths, signatures, add missing patterns
+2. Follow existing kb style (see Writing Style below)
+3. Commit: `docs: update kb/{file} — {what changed}`
+
+### Task 5: Report What Was Done
 
 ```
 DOCS REVIEW
 ===========
 Branch: [current branch]
-Changed files: [N]
 
-KB STALENESS
-------------
-[list of stale sections, if any]
-- security.md:42 — references old rate_limit.py path
-- architecture.md:15 — missing new blueprint
-
-SUGGESTED ADDITIONS
--------------------
-[list, or "None — existing docs cover the changes"]
-- Consider adding X to kb/Y.md because [reason]
+UPDATED
+-------
+- kb/architecture.md — added cqrs/ to directory tree, updated request flow
+- kb/security.md:42 — fixed rate_limit.py path
 
 NO ACTION NEEDED
 ----------------
-[list of things that DON'T need docs and why]
+- New endpoint /api/foo — self-documenting, no kb needed
 ```
 
-## What NOT to Suggest
+## What NOT to Update
 
-- Documenting every new function or class
-- Creating kb pages for features that are still in_progress
-- Adding docs for patterns already covered by existing kb
-- Docs that would duplicate auto-generated content
+- Every new function or class
+- kb pages for features that are still in_progress
+- Patterns already covered by existing kb
+- Content that duplicates auto-generated docs
 - Implementation details that change frequently
 
-## Writing Style Guide (for suggestions)
+## Writing Style (for updates)
 
-When suggesting doc additions, follow existing kb style:
+Follow existing kb style:
 - **Practical, not theoretical** — show code, not concepts
 - **Pitfalls section** — what goes wrong, numbered list
 - **See Also links** — cross-reference related kb pages
