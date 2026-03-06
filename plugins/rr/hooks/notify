@@ -1,46 +1,126 @@
-#!/usr/bin/env bash
-# Notification hook — sends push notification via ntfy when Claude waits for user
-# Only notifies if >= MIN_ELAPSED seconds since last user prompt (skip live chat)
-set -euo pipefail
+#!/usr/bin/env python3
+"""Notification hook — sends push notification via ntfy with context summary."""
+import json
+import os
+import subprocess
+import sys
+import time
 
-MIN_ELAPSED=60
-NTFY_URL="https://ntfy.wczasowa8.pl/claude-code"
-TIMESTAMP_FILE="/tmp/.claude-last-prompt-ts"
+MIN_ELAPSED = 60
+NTFY_URL = "https://ntfy.wczasowa8.pl/claude-code"
+TIMESTAMP_FILE = "/tmp/.claude-last-prompt-ts"
+MAX_BODY_LEN = 300
 
-# Check elapsed time since last user prompt
-if [ -f "$TIMESTAMP_FILE" ]; then
-    last_prompt=$(cat "$TIMESTAMP_FILE")
-    now=$(date +%s)
-    elapsed=$(( now - last_prompt ))
-    if [ "$elapsed" -lt "$MIN_ELAPSED" ]; then
-        exit 0
-    fi
-fi
 
-input=$(cat)
+def check_throttle() -> bool:
+    """Return True if notification should be sent (enough time elapsed)."""
+    try:
+        with open(TIMESTAMP_FILE) as f:
+            last_prompt = int(f.read().strip())
+        return (int(time.time()) - last_prompt) >= MIN_ELAPSED
+    except (FileNotFoundError, ValueError):
+        return True
 
-# Extract notification message
-message=$(echo "$input" | jq -r '.message // .reason // "Claude czeka na Ciebie"')
 
-# Get branch and project context
-branch=""
-project=""
-if git rev-parse --git-dir &>/dev/null 2>&1; then
-    branch=$(git branch --show-current 2>/dev/null || echo "")
-    project=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo "")
-fi
+def extract_last_assistant_text(transcript_path: str) -> str:
+    """Read transcript JSONL, return last assistant text blocks concatenated."""
+    if not transcript_path or not os.path.exists(transcript_path):
+        return ""
+    try:
+        last_texts = []
+        with open(transcript_path) as f:
+            for line in f:
+                try:
+                    msg = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if msg.get("type") != "assistant":
+                    continue
+                content = (msg.get("message") or {}).get("content") or []
+                texts = [b["text"] for b in content if b.get("type") == "text" and b.get("text")]
+                if texts:
+                    last_texts = texts
+        return "\n".join(last_texts)
+    except Exception:
+        return ""
 
-# Build title
-title="Claude Code"
-[ -n "$project" ] && title="${title} | ${project}"
-[ -n "$branch" ] && title="${title} [${branch}]"
 
-# Send notification (fire-and-forget, don't block Claude)
-curl -s -o /dev/null \
-    -H "Title: ${title}" \
-    -H "Priority: default" \
-    -H "Tags: robot" \
-    -d "${message}" \
-    "${NTFY_URL}" 2>/dev/null || true
+def classify_message(text: str) -> tuple[str, str]:
+    """Classify as done/waiting and extract short summary."""
+    if not text:
+        return "info", "Claude czeka na Ciebie"
 
-exit 0
+    # Truncate to last MAX_BODY_LEN chars for the notification body
+    summary = text.strip()
+    if len(summary) > MAX_BODY_LEN:
+        summary = "..." + summary[-(MAX_BODY_LEN - 3):]
+
+    # Detect if waiting for decision (ends with ?)
+    lines = text.strip().splitlines()
+    last_line = lines[-1].strip() if lines else ""
+    if "?" in last_line or "akceptujesz" in text.lower() or "commitować" in text.lower() or "pushować" in text.lower():
+        tag = "question"
+    else:
+        tag = "white_check_mark"
+
+    return tag, summary
+
+
+def get_git_context() -> tuple[str, str]:
+    """Return (project, branch)."""
+    try:
+        project = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=5
+        ).stdout.strip()
+        project = os.path.basename(project) if project else ""
+    except Exception:
+        project = ""
+    try:
+        branch = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True, text=True, timeout=5
+        ).stdout.strip()
+    except Exception:
+        branch = ""
+    return project, branch
+
+
+def send_ntfy(title: str, body: str, tag: str):
+    """Fire-and-forget POST to ntfy."""
+    try:
+        subprocess.run(
+            ["curl", "-s", "-o", "/dev/null",
+             "-H", f"Title: {title}",
+             "-H", "Priority: default",
+             "-H", f"Tags: {tag}",
+             "-d", body,
+             NTFY_URL],
+            timeout=10, capture_output=True
+        )
+    except Exception:
+        pass
+
+
+def main():
+    if not check_throttle():
+        sys.exit(0)
+
+    hook_input = json.load(sys.stdin)
+
+    transcript_path = hook_input.get("transcript_path", "")
+    last_text = extract_last_assistant_text(transcript_path)
+    tag, summary = classify_message(last_text)
+
+    project, branch = get_git_context()
+    title = "Claude Code"
+    if project:
+        title += f" | {project}"
+    if branch:
+        title += f" [{branch}]"
+
+    send_ntfy(title, summary, tag)
+
+
+if __name__ == "__main__":
+    main()

@@ -43,4 +43,4 @@ CMDBLOCK
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_NAME="$1"
 shift
-exec bash "${SCRIPT_DIR}/${SCRIPT_NAME}" "$@"
+exec "${SCRIPT_DIR}/${SCRIPT_NAME}" "$@"
