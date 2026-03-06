@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Notification hook — sends push notification via ntfy when Claude waits for user
+# Only notifies if >= MIN_ELAPSED seconds since last user prompt (skip live chat)
+set -euo pipefail
+
+MIN_ELAPSED=60
+NTFY_URL="https://ntfy.wczasowa8.pl/claude-code"
+TIMESTAMP_FILE="/tmp/.claude-last-prompt-ts"
+
+# Check elapsed time since last user prompt
+if [ -f "$TIMESTAMP_FILE" ]; then
+    last_prompt=$(cat "$TIMESTAMP_FILE")
+    now=$(date +%s)
+    elapsed=$(( now - last_prompt ))
+    if [ "$elapsed" -lt "$MIN_ELAPSED" ]; then
+        exit 0
+    fi
+fi
+
+input=$(cat)
+
+# Extract notification message
+message=$(echo "$input" | jq -r '.message // .reason // "Claude czeka na Ciebie"')
+
+# Get branch and project context
+branch=""
+project=""
+if git rev-parse --git-dir &>/dev/null 2>&1; then
+    branch=$(git branch --show-current 2>/dev/null || echo "")
+    project=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || echo "")
+fi
+
+# Build title
+title="Claude Code"
+[ -n "$project" ] && title="${title} | ${project}"
+[ -n "$branch" ] && title="${title} [${branch}]"
+
+# Send notification (fire-and-forget, don't block Claude)
+curl -s -o /dev/null \
+    -H "Title: ${title}" \
+    -H "Priority: default" \
+    -H "Tags: robot" \
+    -d "${message}" \
+    "${NTFY_URL}" 2>/dev/null || true
+
+exit 0

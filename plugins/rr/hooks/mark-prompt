@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# UserPromptSubmit hook — saves timestamp for notification throttling
+date +%s > /tmp/.claude-last-prompt-ts
+exit 0
