@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# PreToolUse hook — blocks direct `pytest` invocation, forces ./cli.py test run
+set -euo pipefail
+
+input=$(cat)
+
+tool_name=$(echo "$input" | jq -r '.tool_name // ""')
+[ "$tool_name" = "Bash" ] || exit 0
+
+command=$(echo "$input" | jq -r '.tool_input.command // ""')
+
+# Block: pytest as the first command word (with optional args)
+# Allow: ./cli.py (internally uses pytest in Docker), pip install pytest, grep pytest, etc.
+if echo "$command" | grep -qE '(^|&&\s*|\|\|\s*|;\s*)pytest(\s|$)'; then
+    cat <<'EOF'
+{
+  "hookSpecificOutput": {
+    "permissionDecision": "deny"
+  },
+  "systemMessage": "BLOCKED: Direct `pytest` is forbidden. Use `./cli.py test run` instead. It runs tests in Docker with auto-restart for full suite. Options: -g <group>, -f <path>, -k <keyword>. See `rr:running-tests` skill for details."
+}
+EOF
+    exit 0
+fi
+
+exit 0

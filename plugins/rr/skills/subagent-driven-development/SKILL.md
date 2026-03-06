@@ -46,25 +46,19 @@ Before anything else:
 
 ### Step 1: Baseline Tests (MANDATORY)
 
+> **Tests:** Invoke `rr:running-tests` for full context on test groups, diagnostics, and best practices.
+
 Run ALL tests (backend + E2E) BEFORE any implementation. Creates evidence of what passes/fails before you touch code.
 
 ```bash
-# Backend tests
-./cli.py test up
 mkdir -p .ai/test-results/<branch-name>
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/baseline-backend.log
-./cli.py test down   # REQUIRED: clears shared postgres/redis volumes
-
-# E2E tests (MUST run after test down — shared docker-compose.test.yml)
-./cli.py e2e up
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/baseline-e2e.log
-./cli.py e2e down
-
-# Resume backend Docker for task execution
-./cli.py test up --no-build
 ```
 
-Parse pytest/playwright summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
+Full suite auto-restarts the stack for clean state — no manual `test up`/`test down` needed.
+
+Parse test summaries. Extract failed test names to `baseline-failures.txt`. Note failures but DO NOT STOP — this is the known state. Commit: `"test: baseline results"`.
 
 <HARD-RULE>
 NEVER do task work in the main context. ALWAYS dispatch as Agent subagent.

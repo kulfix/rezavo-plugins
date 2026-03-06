@@ -5,16 +5,24 @@ description: Use when about to run pytest, ./cli.py test, ./cli.py e2e, or any t
 
 # Running Tests
 
-**NIGDY `pytest` lokalnie. Zawsze Docker przez `./cli.py`.**
+<HARD-RULE>
+NEVER run `pytest` directly. A PreToolUse hook will block it.
+Always use `./cli.py test run` (backend) or `./cli.py e2e test` (E2E).
+</HARD-RULE>
 
-## Backend (pytest)
+## Auto-restart
+
+Full suite (`-g all`, `e2e test all`) **automatically restarts the Docker stack** before running — clean DB, clean Redis, no stale state. No manual `test up`/`test down` needed.
+
+Targeted tests (`-k`, `-f`, `-g fast`) run instantly on the existing stack.
+
+## Backend
 
 ```bash
-./cli.py test up              # Start (raz na sesje)
-./cli.py test run -g fast     # Grupa
+./cli.py test run -g fast       # Grupa
 ./cli.py test run -f tests/api/ # Sciezka
 ./cli.py test run -k "test_m1"  # Keyword
-./cli.py test down            # Stop (na koniec)
+./cli.py test run -g all        # Full suite (auto-restart)
 ```
 
 Grupy: `fast`, `services`, `api`, `models`, `jobs`, `matching`, `integration`, `security`, `all`.
@@ -22,15 +30,10 @@ Sprawdz: `./cli.py test groups`
 
 ## E2E (Playwright)
 
-**Osobne srodowisko Docker** — nie mieszaj z backend:
-
 ```bash
-./cli.py e2e up               # Build & start
-./cli.py e2e up --no-build    # Start bez rebuild (szybciej)
-./cli.py e2e test smoke       # Konkretna grupa
-./cli.py e2e test all         # Wszystkie grupy
+./cli.py e2e test smoke         # Konkretna grupa
+./cli.py e2e test all           # Wszystkie grupy (auto-restart)
 ./cli.py e2e test smoke --debug # Z inspektorem
-./cli.py e2e down             # Stop
 ```
 
 Grupy E2E: `smoke`, `booking`, `dashboard`, `templates`, `visual`, `edge`, `all`.
@@ -42,7 +45,7 @@ CI: `gh workflow run e2e-modular.yml -f groups=booking -f test_file=path/to/test
 | Sytuacja | Komenda |
 |----------|---------|
 | Podczas pracy nad taskiem | `-f tests/api/` lub `-k "test_name"` — TYLKO dotyczace zmian |
-| Przed PR (backend) | `-g all` (>10 min) |
+| Przed PR (backend) | `-g all` |
 | Przed PR (E2E) | `./cli.py e2e test all` |
 | Baseline na poczatku workflow | `-g all` + `e2e test all` (zapisz logi) |
 | Debug 1 testu CI | `test_file=` w GH Actions, NIE caly workflow |

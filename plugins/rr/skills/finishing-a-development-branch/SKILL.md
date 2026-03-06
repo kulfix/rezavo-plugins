@@ -36,7 +36,7 @@ Use `feature-context` skill: set `status: done`, verify all plan items reflected
 
 Verify containers healthy before proceeding. Keep running through Steps 3-5.
 
-`e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Step 3).
+`e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Step 3). Full suite commands auto-restart the stack for clean state.
 
 ### Step 3: Visual Verification (AUTOMATIC)
 
@@ -54,11 +54,13 @@ git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|c
 
 ### Step 4: Final Backend Tests
 
+> **Tests:** Invoke `rr:running-tests` for full context on test groups, diagnostics, and best practices.
+
 ```bash
 ./cli.py test run -g all 2>&1 | tee .ai/test-results/<branch-name>/final.log
 ```
 
-Parse pytest summary. Extract failed test names to `final-failures.txt`.
+Full suite auto-restarts the stack for clean state. Parse test summary. Extract failed test names to `final-failures.txt`.
 
 ### Step 5: Fix Loop — Backend Tests
 
