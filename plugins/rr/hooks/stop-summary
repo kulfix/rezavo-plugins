@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Stop hook — blocks stop until Claude writes summary (only for long tasks)
+set -euo pipefail
+
+MIN_ELAPSED=60
+TIMESTAMP_FILE="/tmp/.claude-last-prompt-ts"
+SUMMARY_FILE="/tmp/.claude-stop-summary"
+
+# Check elapsed time — if short (live chat), approve immediately
+if [ -f "$TIMESTAMP_FILE" ]; then
+    last_prompt=$(cat "$TIMESTAMP_FILE")
+    now=$(date +%s)
+    elapsed=$(( now - last_prompt ))
+    if [ "$elapsed" -lt "$MIN_ELAPSED" ]; then
+        echo '{"decision": "approve"}'
+        exit 0
+    fi
+fi
+
+# Long task — require summary file
+if [ -f "$SUMMARY_FILE" ] && [ -s "$SUMMARY_FILE" ]; then
+    echo '{"decision": "approve"}'
+    exit 0
+fi
+
+# Block — ask Claude to write summary
+cat <<'EOF'
+{
+  "decision": "block",
+  "reason": "Before stopping, write a 1-2 sentence status to /tmp/.claude-stop-summary using the Bash tool: echo 'your summary' > /tmp/.claude-stop-summary. Include: what you did, and whether you finished or need a decision (what decision?)."
+}
+EOF
+exit 0

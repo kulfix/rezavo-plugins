@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Notification hook — sends push notification via ntfy with context summary."""
+"""Notification hook — sends push via ntfy with Claude's prepared summary."""
 import json
 import os
 import subprocess
@@ -9,11 +9,10 @@ import time
 MIN_ELAPSED = 60
 NTFY_URL = "https://ntfy.wczasowa8.pl/claude-code"
 TIMESTAMP_FILE = "/tmp/.claude-last-prompt-ts"
-MAX_BODY_LEN = 300
+SUMMARY_FILE = "/tmp/.claude-stop-summary"
 
 
 def check_throttle() -> bool:
-    """Return True if notification should be sent (enough time elapsed)."""
     try:
         with open(TIMESTAMP_FILE) as f:
             last_prompt = int(f.read().strip())
@@ -22,72 +21,34 @@ def check_throttle() -> bool:
         return True
 
 
-def extract_last_assistant_text(transcript_path: str) -> str:
-    """Read transcript JSONL, return last assistant text blocks concatenated."""
-    if not transcript_path or not os.path.exists(transcript_path):
-        return ""
+def get_summary() -> str | None:
     try:
-        last_texts = []
-        with open(transcript_path) as f:
-            for line in f:
-                try:
-                    msg = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if msg.get("type") != "assistant":
-                    continue
-                content = (msg.get("message") or {}).get("content") or []
-                texts = [b["text"] for b in content if b.get("type") == "text" and b.get("text")]
-                if texts:
-                    last_texts = texts
-        return "\n".join(last_texts)
-    except Exception:
-        return ""
-
-
-def classify_message(text: str) -> tuple[str, str]:
-    """Classify as done/waiting and extract short summary."""
-    if not text:
-        return "info", "Claude czeka na Ciebie"
-
-    # Truncate to last MAX_BODY_LEN chars for the notification body
-    summary = text.strip()
-    if len(summary) > MAX_BODY_LEN:
-        summary = "..." + summary[-(MAX_BODY_LEN - 3):]
-
-    # Detect if waiting for decision (ends with ?)
-    lines = text.strip().splitlines()
-    last_line = lines[-1].strip() if lines else ""
-    if "?" in last_line or "akceptujesz" in text.lower() or "commitować" in text.lower() or "pushować" in text.lower():
-        tag = "question"
-    else:
-        tag = "white_check_mark"
-
-    return tag, summary
+        with open(SUMMARY_FILE) as f:
+            text = f.read().strip()
+        os.remove(SUMMARY_FILE)
+        return text if text else None
+    except FileNotFoundError:
+        return None
 
 
 def get_git_context() -> tuple[str, str]:
-    """Return (project, branch)."""
+    project, branch = "", ""
     try:
-        project = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, timeout=5
-        ).stdout.strip()
-        project = os.path.basename(project) if project else ""
+        r = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, text=True, timeout=5)
+        project = os.path.basename(r.stdout.strip()) if r.stdout.strip() else ""
     except Exception:
-        project = ""
+        pass
     try:
-        branch = subprocess.run(
-            ["git", "branch", "--show-current"],
-            capture_output=True, text=True, timeout=5
-        ).stdout.strip()
+        r = subprocess.run(["git", "branch", "--show-current"],
+                           capture_output=True, text=True, timeout=5)
+        branch = r.stdout.strip()
     except Exception:
-        branch = ""
+        pass
     return project, branch
 
 
 def send_ntfy(title: str, body: str, tag: str):
-    """Fire-and-forget POST to ntfy."""
     try:
         subprocess.run(
             ["curl", "-s", "-o", "/dev/null",
@@ -103,14 +64,16 @@ def send_ntfy(title: str, body: str, tag: str):
 
 
 def main():
+    json.load(sys.stdin)  # consume stdin
+
     if not check_throttle():
         sys.exit(0)
 
-    hook_input = json.load(sys.stdin)
+    summary = get_summary()
+    if not summary:
+        sys.exit(0)
 
-    transcript_path = hook_input.get("transcript_path", "")
-    last_text = extract_last_assistant_text(transcript_path)
-    tag, summary = classify_message(last_text)
+    tag = "question" if "?" in summary else "white_check_mark"
 
     project, branch = get_git_context()
     title = "Claude Code"
