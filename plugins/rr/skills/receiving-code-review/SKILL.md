@@ -11,7 +11,7 @@ Code review requires technical evaluation, not emotional performance.
 
 ## The Process
 
-### Task 1: Read
+### Step 1: Read
 
 Read complete feedback without reacting. Do NOT respond yet.
 
@@ -20,7 +20,7 @@ Read complete feedback without reacting. Do NOT respond yet.
 - "Great point!" / "Excellent feedback!" (performative)
 - "Let me implement that now" (before verification)
 
-### Task 2: Understand
+### Step 2: Understand
 
 Restate each requirement in your own words.
 
@@ -36,7 +36,7 @@ You understand 1,2,3,6. Unclear on 4,5.
 ✅ RIGHT: "I understand items 1,2,3,6. Need clarification on 4 and 5 before proceeding."
 ```
 
-### Task 3: Verify
+### Step 3: Verify
 
 Check each suggestion against codebase reality.
 
@@ -58,7 +58,7 @@ If conflicts with your human partner's prior decisions → stop and discuss with
 
 **Your human partner's rule:** "External feedback - be skeptical, but check carefully"
 
-### Task 4: Evaluate
+### Step 4: Evaluate
 
 Is each suggestion technically sound for THIS codebase?
 
@@ -89,7 +89,7 @@ IF reviewer suggests "implementing properly":
 
 **Signal if uncomfortable pushing back out loud:** "Strange things are afoot at the Circle K"
 
-### Task 5: Respond
+### Step 5: Respond
 
 Technical acknowledgment or reasoned pushback. Never performative.
 
@@ -122,7 +122,7 @@ If you catch yourself about to write "Thanks" — DELETE IT. State the fix inste
 
 State the correction factually and move on.
 
-### Task 6: Implement
+### Step 6: Implement
 
 One item at a time. Test each fix individually.
 
