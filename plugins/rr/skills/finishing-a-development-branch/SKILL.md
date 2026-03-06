@@ -162,13 +162,19 @@ Evidence: .ai/test-results/<branch>/baseline.log
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-### Task 9: Monitor GH Actions
+### Task 9: Monitor GH Actions (MANDATORY — ALL CHECKS GREEN)
+
+<HARD-RULE>
+The feature is NOT done until ALL GitHub Actions checks are GREEN.
+No partial passes. No "it's just a flaky test". No skipping.
+ALL checks GREEN = done. Anything else = fix loop.
+</HARD-RULE>
 
 After PR is created, CI must pass — not just local tests.
 
 1. Spawn `rr:workflow-monitor` agent to wait for PR checks
-2. **PASSED** → proceed to Task 10
-3. **FAILED** → spawn `rr:workflow-fixer` agent with error logs → fix → commit → push → back to monitor
+2. **ALL GREEN** → proceed to Task 10
+3. **ANY RED** → spawn `rr:workflow-fixer` agent with error logs → fix → commit → push → back to monitor
 
 ```
 FIX LOOP:
@@ -177,8 +183,11 @@ FIX LOOP:
 3. git push (triggers new CI run)
 4. workflow-monitor waits for new run
 5. Still failing? → back to 2
-6. Passed? → Task 10
+6. ALL GREEN? → Task 10
 ```
+
+**If a check is genuinely flaky:** Re-run it ONCE. If it fails again — it's real. Fix it.
+**If a check is unrelated to your changes:** Fix it anyway or get user approval to proceed.
 
 ### Task 10: Cleanup
 
