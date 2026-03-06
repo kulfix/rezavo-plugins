@@ -19,15 +19,10 @@ echo "$command" | grep -qE '(^|&&\s*|\|\|\s*|;\s*)git commit' || exit 0
 # Run generation
 python scripts/generate_docs.py > /dev/null 2>&1 || exit 0
 
-# Check if generated docs changed
+# Auto-commit if generated docs changed
 if ! git diff --quiet docs/kb/generated/ 2>/dev/null; then
     git add docs/kb/generated/ 2>/dev/null || true
-    cat <<'EOF'
-{
-  "systemMessage": "Reference docs in docs/kb/generated/ are stale after this commit. They have been staged — create a new commit to include them, e.g.: git commit -m 'docs: regenerate reference docs'"
-}
-EOF
-    exit 0
+    git commit -m "docs: regenerate reference docs" --no-verify 2>/dev/null || true
 fi
 
 exit 0
