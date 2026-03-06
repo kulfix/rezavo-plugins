@@ -17,7 +17,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
-## Step 0: Load Feature Context (REQUIRED)
+## Task 0: Load Feature Context (REQUIRED)
 
 Before writing any plan:
 1. Use `feature-context` skill to find the active feature file
@@ -96,7 +96,7 @@ FORBIDDEN:
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
-**Step 1: Write the failing test**
+**Task 1: Write the failing test**
 
 ```python
 def test_specific_behavior():
@@ -104,24 +104,24 @@ def test_specific_behavior():
     assert result == expected
 ```
 
-**Step 2: Run test to verify it fails**
+**Task 2: Run test to verify it fails**
 
 Run: `./cli.py test run -k "test_name"`
 Expected: FAIL with "function not defined"
 
-**Step 3: Write minimal implementation**
+**Task 3: Write minimal implementation**
 
 ```python
 def function(input):
     return expected
 ```
 
-**Step 4: Run test to verify it passes**
+**Task 4: Run test to verify it passes**
 
 Run: `./cli.py test run -k "test_name"`
 Expected: PASS
 
-**Step 5: Commit**
+**Task 5: Commit**
 
 ```bash
 git add tests/path/test.py src/path/file.py
@@ -139,13 +139,13 @@ If design doc has Operational Changes (not N/A) → plan MUST include ops task(s
 **Files:**
 - Create: `ops/versions/YYYYMMDD_NNN_slug.py`
 
-**Step 1: Generate ops file**
+**Task 1: Generate ops file**
 
 ```bash
 ./cli.py ops create "description of what this operation does"
 ```
 
-**Step 2: Implement apply()**
+**Task 2: Implement apply()**
 
 ```python
 def apply():
@@ -156,17 +156,17 @@ def apply():
 Available helpers: `enable_jobs()`, `disable_jobs()`, `set_settings()`, `run_sql()`.
 Each accepts `tenant_id=N` (single tenant) or `all_tenants=True`.
 
-**Step 3: Implement rollback() (optional)**
+**Task 3: Implement rollback() (optional)**
 
 Only if the operation is reversible. Skip for fire-and-forget ops.
 
-**Step 4: Verify**
+**Task 4: Verify**
 
 ```bash
 ./cli.py ops status  # should show new operation as Pending
 ```
 
-**Step 5: Commit**
+**Task 5: Commit**
 
 ```bash
 git add ops/versions/YYYYMMDD_NNN_slug.py
@@ -187,15 +187,15 @@ If design doc has Acceptance Scenarios → plan MUST include E2E task(s). Place 
 
 **Scenarios from design:** SC-01 (atomic), SC-02 (atomic), SC-03 (journey)
 
-**Step 1: Write E2E spec** — one test per SC-XX, loginViaAPI in beforeEach
+**Task 1: Write E2E spec** — one test per SC-XX, loginViaAPI in beforeEach
 
-**Step 2: Run:** `./cli.py e2e test features`
+**Task 2: Run:** `./cli.py e2e test features`
 
-**Step 3: Commit:** `git commit -m "test(e2e): add SC-01..SC-03 for <feature>"`
+**Task 3: Commit:** `git commit -m "test(e2e): add SC-01..SC-03 for <feature>"`
 ````
 
 ## Remember
-- Load feature context FIRST (Step 0)
+- Load feature context FIRST (Task 0)
 - Exact file paths always
 - Complete code in plan (not "add validation")
 - Exact commands with expected output

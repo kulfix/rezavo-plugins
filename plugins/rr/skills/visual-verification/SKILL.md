@@ -15,7 +15,7 @@ Screenshots prove features work. Text descriptions don't.
 
 ## The Process
 
-### Step 1: Map Capabilities to Screenshots
+### Task 1: Map Capabilities to Screenshots
 
 Read feature file → section "Co można zrobić" (or equivalent capability list). Each capability = at least one screenshot.
 
@@ -30,7 +30,7 @@ If feature file has no capability list — read "Co zrobione" or PR summary. Eve
 
 The goal: someone opening the PR sees exactly what was built without running the code.
 
-### Step 2: Start App in Docker
+### Task 2: Start App in Docker
 
 <HARD-RULE>
 Docker is the ONLY way. Staging/dev servers run `main`, not your feature branch. Docker has your code via volume mounts + controlled seed data. No excuses — start it.
@@ -61,11 +61,11 @@ Check if E2E Docker containers are already running (`docker compose -f docker-co
 | e2e_operator | Test123456!@# | operator |
 | e2e_tenant_b_op | Test123456!@# | operator (tenant B) |
 
-### Step 3: Playwright MCP Screenshots
+### Task 3: Playwright MCP Screenshots
 
 1. Load Playwright MCP tools via ToolSearch
 2. Navigate to `http://localhost:3003/`, login with seed credentials
-3. For each capability from Step 1, screenshot:
+3. For each capability from Task 1, screenshot:
 
 <HARD-RULE>
 Every capability from the screenshot plan MUST have at least one screenshot.
@@ -85,7 +85,7 @@ Each screenshot must be self-explanatory — someone seeing ONLY the screenshot 
 **Save to:** `.ai/screenshots/<branch-name>/`
 **Naming:** `<page>-<state>.png` (e.g., `users-edit-modal.png`)
 
-### Step 4: Commit and Reference
+### Task 4: Commit and Reference
 
 ```bash
 git add .ai/screenshots/<branch-name>/
@@ -120,5 +120,5 @@ PR body: add `## Screenshots` section. For private repos use `github.com/raw/` f
 
 ## Integration
 
-**Called by:** `finishing-a-development-branch` (Step 3)
+**Called by:** `finishing-a-development-branch` (Task 3)
 **Pairs with:** `verification-before-completion`, `pre-merge-review`

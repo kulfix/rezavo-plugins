@@ -68,14 +68,14 @@ digraph brainstorming {
 
 **The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
 
-## Step 0: Load Feature Context (REQUIRED)
+## Task 0: Load Feature Context (REQUIRED)
 
 Before starting brainstorming:
 1. Use `feature-context` skill to check existing feature files for this branch
 2. If feature file exists — read it, understand status and dependencies
 3. If no feature file — you'll create one in step 6
 
-## Branch Creation (Step 7)
+## Branch Creation (Task 7)
 
 After design is approved, before writing docs:
 

@@ -22,7 +22,7 @@ kb style.
 
 ## The Process
 
-### Step 1: Identify What Changed
+### Task 1: Identify What Changed
 
 ```bash
 # Get branch diff scope
@@ -35,7 +35,7 @@ Categorize changed files by domain:
 - New integrations → may need integrations.md update
 - New models/handlers → auto-generated docs handle this
 
-### Step 2: Cross-Reference kb/ with Code
+### Task 2: Cross-Reference kb/ with Code
 
 Auto-generated docs (`docs/kb/generated/`) are refreshed by commit hook — skip them.
 
@@ -50,7 +50,7 @@ For each `docs/kb/*.md`, check if the patterns described still match the code:
 
 **Flag stale sections** — where docs describe old code that's been refactored.
 
-### Step 3: Identify Documentation Gaps
+### Task 3: Identify Documentation Gaps
 
 Scan for new patterns that have NO kb coverage:
 
@@ -71,7 +71,7 @@ Scan for new patterns that have NO kb coverage:
 - One-off implementations
 - Internal implementation details
 
-### Step 4: Present Report
+### Task 4: Present Report
 
 ```
 DOCS REVIEW

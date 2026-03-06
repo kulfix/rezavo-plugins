@@ -15,7 +15,7 @@ Final gate before PR: verify tests, take screenshots, run E2E, auto-create PR.
 
 ## The Process
 
-### Step 0: Verify Gate (REQUIRED)
+### Task 0: Verify Gate (REQUIRED)
 
 `<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN or missing → **ASK user.** Do NOT assume `main`.
 
@@ -24,27 +24,27 @@ Final gate before PR: verify tests, take screenshots, run E2E, auto-create PR.
 
 All subsequent steps use `<base-branch>` — NEVER hardcode `main`.
 
-### Step 1: Update Feature File
+### Task 1: Update Feature File
 
 Use `feature-context` skill: set `status: done`, verify all plan items reflected.
 
-### Step 2: Docs Review
+### Task 2: Docs Review
 
 Run `rr:docs-review` skill — checks if `docs/kb/` needs updates based on what was built.
 Only suggests additions where a future developer would be confused without them.
 Does NOT block the flow — review suggestions, apply if useful, skip if not.
 
-### Step 3: Start Docker Environment
+### Task 3: Start Docker Environment
 
 ```bash
 ./cli.py e2e up    # builds + starts backend, frontend, postgres, redis
 ```
 
-Verify containers healthy before proceeding. Keep running through Steps 4-7.
+Verify containers healthy before proceeding. Keep running through Tasks 4-7.
 
-`e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Step 4). Full suite commands auto-restart the stack for clean state.
+`e2e up` includes everything `test up` has PLUS frontend — needed for visual verification (Task 4). Full suite commands auto-restart the stack for clean state.
 
-### Step 4: Visual Verification (AUTOMATIC)
+### Task 4: Visual Verification (AUTOMATIC)
 
 <HARD-RULE>
 NEVER ask if visual verification is needed. Check the diff automatically.
@@ -58,7 +58,7 @@ git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|c
 - **Matches found:** Run `rr:visual-verification` skill. Docker is already running — skill should skip startup.
 - **No matches:** Skip. Log: "No frontend files in diff — skipping visual verification."
 
-### Step 5: Final Backend Tests
+### Task 5: Final Backend Tests
 
 > **Tests:** Invoke `rr:running-tests` for full context on test groups, diagnostics, and best practices.
 
@@ -68,7 +68,7 @@ git diff <base-branch>...HEAD --name-only | grep -E 'frontend/|\.(tsx|jsx|html|c
 
 Full suite auto-restarts the stack for clean state. Parse test summary. Extract failed test names to `final-failures.txt`.
 
-### Step 6: Fix Loop — Backend Tests
+### Task 6: Fix Loop — Backend Tests
 
 <HARD-RULE>
 This is an AUTOMATIC workflow. No "present options to user". No "create PR with warnings".
@@ -86,25 +86,25 @@ FIX LOOP:
 2. Fix the code (not the test — unless test itself is wrong)
 3. Re-run: ./cli.py test run -g all
 4. Still failing? → back to 1
-5. Clean? → continue to Step 6
+5. Clean? → continue to Task 6
 ```
 
-### Step 7: Fix Loop — E2E Tests
+### Task 7: Fix Loop — E2E Tests
 
-E2E Docker is already running from Step 2.
+E2E Docker is already running from Task 2.
 
 ```bash
 ./cli.py e2e test all 2>&1 | tee .ai/test-results/<branch-name>/final-e2e.log
 ```
 
-Same fix loop as Step 6. Baseline: `baseline-e2e.log`. No baseline = all were passing = fix everything.
+Same fix loop as Task 6. Baseline: `baseline-e2e.log`. No baseline = all were passing = fix everything.
 
 After E2E passes:
 ```bash
 ./cli.py e2e down
 ```
 
-### Step 8: Push + Auto-PR
+### Task 8: Push + Auto-PR
 
 ```bash
 git push -u origin <feature-branch>
@@ -162,12 +162,12 @@ Evidence: .ai/test-results/<branch>/baseline.log
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-### Step 9: Monitor GH Actions
+### Task 9: Monitor GH Actions
 
 After PR is created, CI must pass — not just local tests.
 
 1. Spawn `rr:workflow-monitor` agent to wait for PR checks
-2. **PASSED** → proceed to Step 10
+2. **PASSED** → proceed to Task 10
 3. **FAILED** → spawn `rr:workflow-fixer` agent with error logs → fix → commit → push → back to monitor
 
 ```
@@ -177,10 +177,10 @@ FIX LOOP:
 3. git push (triggers new CI run)
 4. workflow-monitor waits for new run
 5. Still failing? → back to 2
-6. Passed? → Step 10
+6. Passed? → Task 10
 ```
 
-### Step 10: Cleanup
+### Task 10: Cleanup
 
 Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first.
 
@@ -203,6 +203,6 @@ Clean up worktree if applicable. If Option 4 (discard) was chosen, confirm first
 ## Integration
 
 **Called by:** `subagent-driven-development`, `executing-plans` — after pre-merge-review
-**Requires:** `pre-merge-review` completed (Step 0), `feature-context` (Step 1)
-**Uses:** `docs-review` (Step 2), `visual-verification` (Step 4, automatic), `rr:workflow-monitor` (Step 9), `rr:workflow-fixer` (Step 9, on failure)
+**Requires:** `pre-merge-review` completed (Task 0), `feature-context` (Task 1)
+**Uses:** `docs-review` (Task 2), `visual-verification` (Task 4, automatic), `rr:workflow-monitor` (Task 9), `rr:workflow-fixer` (Task 9, on failure)
 **Reads:** `.ai/test-results/<branch>/baseline-failures.txt` from executor skills

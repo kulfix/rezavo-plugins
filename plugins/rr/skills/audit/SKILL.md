@@ -23,7 +23,7 @@ Fixing = separate step (user runs tasks manually or via executing-plans).
 
 ## The Process
 
-### Step 1: Read Feature File
+### Task 1: Read Feature File
 
 Find feature file matching current branch in `.ai/features/`.
 
@@ -38,18 +38,18 @@ Read the file. Extract from frontmatter:
 
 If no feature file exists → **STOP.** Create one with `rr:feature-context` first.
 
-### Step 2: Determine Scope
+### Task 2: Determine Scope
 
 `<base-branch>` = value from `<branch-context>` injected at session start. If UNKNOWN → **ASK user.** Do NOT assume `main`.
 
-**If `files:` has entries → THAT IS THE SCOPE.** Do NOT run git diff. Do NOT expand scope. Go to Step 3.
+**If `files:` has entries → THAT IS THE SCOPE.** Do NOT run git diff. Do NOT expand scope. Go to Task 3.
 
 **If `files:` is empty/missing → fallback to diff:**
 ```bash
 git diff $(git merge-base HEAD origin/<base-branch>)...HEAD --name-only
 ```
 
-### Step 3: Dispatch 3 Agents
+### Task 3: Dispatch 3 Agents
 
 Send ONE message with 3 Agent tool calls in parallel:
 
@@ -61,21 +61,21 @@ Send ONE message with 3 Agent tool calls in parallel:
 
 Each agent prompt:
 ```
-Review scope: [files from Step 2]
+Review scope: [files from Task 2]
 Feature: [name from feature file]
 Spec/plans: [plans: paths from frontmatter]
 Focus ONLY on scoped files, not legacy code.
 ```
 
-### Step 4: Triage Findings
+### Task 4: Triage Findings
 
 Collect all findings from all 3 agents. Mark each as exactly one of:
 
 | Category | When | Action |
 |----------|------|--------|
-| **MUST FIX** | Real issue, fix in this PR | Create task (Step 5) |
+| **MUST FIX** | Real issue, fix in this PR | Create task (Task 5) |
 | **FALSE POSITIVE** | Agent is wrong | Explain WHY it's wrong |
-| **DEFERRED** | Real issue, not this PR | Write to issues.md (Step 6) |
+| **DEFERRED** | Real issue, not this PR | Write to issues.md (Task 6) |
 
 No other categories. Ever.
 
@@ -85,7 +85,7 @@ No other categories. Ever.
 - DEFERRED is NOT a trash bin — every item must have a real proposed fix
 - Every DEFERRED needs ALL of: source agent + finding ID, reason why not now, proposed fix
 
-### Step 5: Create Tasks from MUST FIX
+### Task 5: Create Tasks from MUST FIX
 
 For each MUST FIX finding:
 
@@ -103,7 +103,7 @@ TaskCreate:
 
 Group related findings in same file into single task.
 
-### Step 6: Write Deferred Issues
+### Task 6: Write Deferred Issues
 
 For each DEFERRED finding, append a row to `.ai/audit/<branch-name>/issues.md`.
 
@@ -122,7 +122,7 @@ Each DEFERRED finding adds a row with status `open`.
 
 `<branch-name>` = git branch with `/` → `-`.
 
-### Step 7: Show Summary
+### Task 7: Show Summary
 
 ```
 AUDIT SUMMARY
@@ -170,7 +170,7 @@ Tasks are created. User decides next step:
 
 | Mistake | Fix |
 |---------|-----|
-| Running git diff before reading feature file | Step 1 is READ FEATURE FILE. Always. |
+| Running git diff before reading feature file | Task 1 is READ FEATURE FILE. Always. |
 | Guessing base branch as `main` | Use `<base-branch>` from session context. If UNKNOWN → ASK. |
 | No feature file exists | Create with **rr:feature-context** first |
 | Empty `files:` | Update during executing-plans, or use `/audit branch` |

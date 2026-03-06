@@ -37,14 +37,14 @@ digraph when_to_use {
 
 ## The Process
 
-### Step 0: Load Feature Context (REQUIRED)
+### Task 0: Load Feature Context (REQUIRED)
 
 Before anything else:
 1. Use `feature-context` skill to find and read the active feature file for this branch
 2. Read the feature file content — understand status, blocked_by, plans
 3. This step is NON-NEGOTIABLE — even after context restore
 
-### Step 1: Baseline Tests (MANDATORY)
+### Task 1: Baseline Tests (MANDATORY)
 
 > **Tests:** Invoke `rr:running-tests` for full context on test groups, diagnostics, and best practices.
 
@@ -89,7 +89,7 @@ If verification needed → dispatch verify subagent.
 digraph process {
     rankdir=TB;
 
-    "Load feature context (Step 0)" [shape=box style=filled fillcolor=lightyellow];
+    "Load feature context (Task 0)" [shape=box style=filled fillcolor=lightyellow];
 
     subgraph cluster_per_task {
         label="Per Task (fast loop)";
@@ -105,7 +105,7 @@ digraph process {
     "Run /pre-merge-review (2 audit rounds + fixes)" [shape=box style=filled fillcolor=lightyellow];
     "Use rr:finishing-a-development-branch → PR" [shape=box style=filled fillcolor=lightgreen];
 
-    "Load feature context (Step 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
+    "Load feature context (Task 0)" -> "Read plan, extract all tasks with full text, note context, create TodoWrite";
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
@@ -231,7 +231,7 @@ After each task is marked complete, update the feature file `files:` field with 
 ## Integration
 
 **Required workflow skills:**
-- **feature-context** - REQUIRED: Load at start (Step 0), update `files:` per task, update status at end
+- **feature-context** - REQUIRED: Load at start (Task 0), update `files:` per task, update status at end
 - **pre-merge-review** - REQUIRED: Run after last task, 2 audit rounds (R2 conditional) + fixes. Then continue to finishing-a-development-branch without stopping.
 - **rr:finishing-a-development-branch** - Complete development after pre-merge-review → PR
 

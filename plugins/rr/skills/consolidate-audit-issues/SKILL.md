@@ -21,7 +21,7 @@ Scan `.ai/audit/` for branch issue files AND `.ai/issues/` for open spotted issu
 
 ## The Process
 
-### Step 1: Find Unprocessed Sources
+### Task 1: Find Unprocessed Sources
 
 **Two input sources:**
 
@@ -39,7 +39,7 @@ Read `INDEX.md` — include only rows with status `open`.
 
 If no unprocessed branches AND no open spotted issues → tell user and STOP.
 
-### Step 2: Read Issue Files + Find PR Numbers
+### Task 2: Read Issue Files + Find PR Numbers
 
 **For audit branches:**
 1. Read `issues.md` — extract rows from markdown table
@@ -52,11 +52,11 @@ gh pr list --state merged --search "<branch-name>" --json number,mergedAt
 1. Read each open `SPOT-XXX.md` — extract severity, type, effort, root cause, proposed fix
 2. No PR needed — these are discovered bugs, not audit deferrals
 
-### Step 3: Read Planned Features
+### Task 3: Read Planned Features
 
 Read all feature files in `.ai/features/*.md` (skip `done/`). These are assignment targets. Note their `audit_issues:` lists.
 
-### Step 4: Present Triage to User
+### Task 4: Present Triage to User
 
 **STOP here and involve the user.** Group all issues (audit + spotted) by theme and present with assignment proposals:
 
@@ -86,7 +86,7 @@ Assignment heuristics:
 
 Wait for user to confirm or adjust before proceeding.
 
-### Step 5: Handle Catch-All Features (if needed)
+### Task 5: Handle Catch-All Features (if needed)
 
 If issues don't fit any existing feature and user approved creating a catch-all:
 
@@ -111,7 +111,7 @@ Catch-all for [theme] issues discovered during audits.
 
 Max 1-2 catch-alls. Zero `nieprzypisane` at the end.
 
-### Step 6: Update Feature Files + Spotted Issue Status
+### Task 6: Update Feature Files + Spotted Issue Status
 
 **Feature files:** For each feature that received new issues, update `audit_issues:` in frontmatter.
 
@@ -122,7 +122,7 @@ Max 1-2 catch-alls. Zero `nieprzypisane` at the end.
 
 SPOT issue files stay in `.ai/issues/` (they are permanent records, not pipeline artifacts). Only their status changes.
 
-### Step 7: Write Consolidated File + Archive
+### Task 7: Write Consolidated File + Archive
 
 Write `.ai/audit/done/YYYY-MM-DD-open-issues.md` (directly to `done/` — it's an archive record, not living data).
 
@@ -138,7 +138,7 @@ After this, `.ai/audit/` contains ONLY:
 - `done/` (archive)
 - Unprocessed branches (if any remain)
 
-### Step 8: Report
+### Task 8: Report
 
 ```
 CONSOLIDATION COMPLETE
@@ -185,12 +185,12 @@ Archive: .ai/audit/done/YYYY-MM-DD-open-issues.md
 
 | Mistake | Fix |
 |---------|-----|
-| Updating feature files before user approves | Step 4 first — triage with user, then update |
+| Updating feature files before user approves | Task 4 first — triage with user, then update |
 | Leaving issues as `nieprzypisane` | Every issue must have a home — create catch-all if needed |
 | Creating too many catch-all features | Max 1-2. Prefer existing features. |
 | Writing consolidated file to .ai/audit/ root | Write directly to `done/` — it's archive, not living data |
 | Reprocessing already-consolidated branches | Check `done/` for previous consolidation sources |
-| Not updating feature file `audit_issues:` | Step 6 — feature files ARE the source of truth |
+| Not updating feature file `audit_issues:` | Task 6 — feature files ARE the source of truth |
 
 **READS:** `.ai/audit/*/issues.md`, `.ai/issues/INDEX.md`, `.ai/issues/SPOT-*.md`, `.ai/features/*.md`
 **WRITES:** `.ai/audit/done/YYYY-MM-DD-open-issues.md` (archive), `.ai/features/*.md` (audit_issues), `.ai/issues/SPOT-*.md` (status), `.ai/issues/INDEX.md` (status)

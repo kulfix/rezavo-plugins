@@ -19,7 +19,7 @@ If you haven't run the verification command in this message, you cannot claim it
 
 ## The Process
 
-### Step 1: Identify
+### Task 1: Identify
 
 What command proves this claim? Match claim to required evidence:
 
@@ -36,7 +36,7 @@ What command proves this claim? Match claim to required evidence:
 
 If you can't name the exact command — you're not ready to claim.
 
-### Step 2: Run
+### Task 2: Run
 
 Execute the FULL command. Fresh, complete, not partial.
 
@@ -44,7 +44,7 @@ Execute the FULL command. Fresh, complete, not partial.
 - Complete = full command, not subset
 - Not partial = `pytest` not `pytest tests/one_file.py` when claiming "all tests pass"
 
-### Step 3: Read
+### Task 3: Read
 
 Read the FULL output. Check exit code. Count failures.
 
@@ -53,14 +53,14 @@ Read the FULL output. Check exit code. Count failures.
 - Count: X passed, Y failed, Z errors
 - Warnings count as potential issues
 
-### Step 4: Verify
+### Task 4: Verify
 
 Does output confirm the claim?
 
-- **YES** → proceed to Step 5
+- **YES** → proceed to Task 5
 - **NO** → state actual status with evidence. Do NOT claim success.
 
-### Step 5: Claim
+### Task 5: Claim
 
 ONLY NOW can you make the claim — with evidence inline:
 
@@ -97,7 +97,7 @@ More patterns:
 
 ## Red Flags — STOP
 
-If you catch yourself doing ANY of these, go back to Step 1:
+If you catch yourself doing ANY of these, go back to Task 1:
 
 - Using "should", "probably", "seems to"
 - Expressing satisfaction before verification ("Great!", "Perfect!", "Done!")
