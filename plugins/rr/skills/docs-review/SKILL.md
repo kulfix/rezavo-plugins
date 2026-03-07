@@ -27,6 +27,8 @@ DO NOT write:
 - "This function takes X and returns Y" (agent can read the code)
 - Explanations of standard patterns (CQRS, REST, ORM)
 - Multi-paragraph descriptions of how something works internally
+- How-to guides or step-by-step tutorials ("Adding a new page: 1. Create... 2. Add...")
+- Build commands or CLI recipes (those belong in README or feature file)
 </HARD-RULE>
 
 ## The Process
@@ -51,6 +53,10 @@ Only flag if:
 - There's a trap that cost debugging time
 
 Don't flag: CRUD, self-documenting code, one-offs, internals.
+
+**New file vs inline?** If a feature introduces a new domain with 3+ own conventions/patterns
+(e.g. frontend got i18n + routing + nav config), create a new `docs/kb/<domain>.md`.
+In existing docs leave 1-2 lines of context + link. Don't bloat existing files with 30+ lines about one topic.
 
 ### Task 4: Fix
 
