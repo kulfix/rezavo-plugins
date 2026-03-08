@@ -4,13 +4,21 @@ Plugin marketplace for Rezavo project.
 
 ## Plugins
 
-### rr (v2.1.12)
+### rr (v2.14.0)
 
-Workflow engine: 20 skilli, 5 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
+Workflow engine: 20 skilli, 6 agentów, 4 komendy, hooks. Wymusza dyscyplinę procesu (brainstorm → plan → execute → verify → audit → finish).
+
+**Model selection (v2.14.0):** Agenty i komendy mają ustawiony optymalny model per komponent. Orchestrator (executing-plans, subagent-driven-development) sam decyduje czy task wymaga Opus czy Sonnet.
+
+| Model | Komponenty |
+|-------|-----------|
+| Opus (inherit) | Fletcher, Javert, Paranoik, /issue, /issue-fix |
+| Sonnet | implementer, workflow-fixer, /docs-review, /consolidate-audit-issues |
+| Haiku | workflow-monitor, /issue-show |
 
 ### rrz (v2.0.0)
 
-Z.AI compatible fork of rr — no `model:` params, works with any backend.
+Fork rr — nie aktualizowany, docelowo do usunięcia.
 
 ## Instalacja na nowej maszynie
 

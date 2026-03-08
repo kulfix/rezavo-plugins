@@ -83,6 +83,23 @@ If subagent failed → dispatch fix subagent with error context.
 If verification needed → dispatch verify subagent.
 </HARD-RULE>
 
+### Model Selection per Task
+
+Choose model based on task complexity:
+
+| Complexity | subagent_type | Model | When |
+|------------|--------------|-------|------|
+| Routine | `rr:implementer` | Sonnet | Boilerplate, CRUD, proste fixy, step-by-step z planu z gotowym kodem |
+| Complex | `general-purpose` | Opus (inherit) | Architektura, security, skomplikowana logika, debugging |
+
+**Heurystyka:**
+- Task ma gotowy kod w planie (copy-paste) → **Sonnet** (`rr:implementer`)
+- Task to "Create X following pattern Y" → **Sonnet**
+- Task wymaga decyzji architektonicznych → **Opus** (`general-purpose`)
+- Task dotyka security/tenant isolation → **Opus**
+- Task wymaga debugowania nieznanego problemu → **Opus**
+- Nie wiesz? → **Opus** (bezpieczny default)
+
 ### Execution Flow
 
 ```dot

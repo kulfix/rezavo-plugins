@@ -1,5 +1,6 @@
 ---
 description: Consolidate deferred audit issues and spotted issues into planned features
+model: sonnet
 args: mode
 ---
 

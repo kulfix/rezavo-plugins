@@ -2,9 +2,12 @@
 
 Use this template when dispatching an implementer subagent.
 
+**Model selection:** Use `rr:implementer` (Sonnet) for routine tasks, `general-purpose` (Opus) for complex tasks.
+See "Model Selection per Task" in the parent skill for heuristics.
+
 ```
 Agent tool call:
-  subagent_type: general-purpose
+  subagent_type: rr:implementer  # lub general-purpose dla złożonych tasków
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]

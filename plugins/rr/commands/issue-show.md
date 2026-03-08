@@ -1,5 +1,6 @@
 ---
 description: Show open spotted issues with quick triage — fix now or assign to feature branch
+model: haiku
 args: filter
 ---
 

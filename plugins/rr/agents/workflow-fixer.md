@@ -1,6 +1,7 @@
 ---
 name: workflow-fixer
 description: Analyzes GitHub Actions errors and fixes code issues. Reads error logs, identifies root cause, fixes code, verifies fix locally before commit.
+model: sonnet
 tools: Read, Edit, Bash, Grep
 permissionMode: acceptEdits
 ---

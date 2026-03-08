@@ -68,15 +68,32 @@ If subagent failed → dispatch fix subagent with error context.
 If verification needed → dispatch verify subagent.
 </HARD-RULE>
 
-Dispatch each task as a subagent (`subagent_type: "general-purpose"`).
+Dispatch each task as a subagent. Choose model based on task complexity.
+
+### Model Selection per Task
+
+| Complexity | subagent_type | Model | When |
+|------------|--------------|-------|------|
+| Routine | `rr:implementer` | Sonnet | Boilerplate, CRUD, proste fixy, step-by-step z planu z gotowym kodem |
+| Complex | `general-purpose` | Opus (inherit) | Architektura, security, skomplikowana logika, debugging |
+
+**Heurystyka:**
+- Task ma gotowy kod w planie (copy-paste) → **Sonnet** (`rr:implementer`)
+- Task to "Create X following pattern Y" → **Sonnet**
+- Task wymaga decyzji architektonicznych → **Opus** (`general-purpose`)
+- Task dotyka security/tenant isolation → **Opus**
+- Task wymaga debugowania nieznanego problemu → **Opus**
+- Nie wiesz? → **Opus** (bezpieczny default)
+
 The plan is already written — subagent implements, you orchestrate.
 
 For each task:
 1. Mark as in_progress
-2. Dispatch as subagent with full task context:
+2. Assess complexity → choose subagent_type
+3. Dispatch as subagent with full task context:
    ```
    Agent tool call:
-     subagent_type: general-purpose
+     subagent_type: rr:implementer  # lub general-purpose dla złożonych tasków
      prompt: |
        Task: [task subject]
        [full task description from plan]
